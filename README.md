@@ -6,7 +6,7 @@
 
 <p align="center">
   <strong>Offline voice typing and speech-to-text for Linux, GNOME and Wayland.</strong><br>
-  Press a hotkey, speak naturally, and WayVoice turns your speech into text in the app you're already using.
+  Press to start, press again to stop. Get local transcription with clipboard fallback.
 </p>
 
 <p align="center">
@@ -27,11 +27,11 @@
 
 ## Voice typing for Linux that stays out of the way
 
-WayVoice is an open-source **Linux dictation app** for system-wide voice input. Instead of opening a separate transcription window, you put the cursor where you want the text, press a global hotkey, speak, and continue working.
+WayVoice is an open-source Linux dictation app built with GTK4/libadwaita. Record through PipeWire, recognize speech locally, then paste the result automatically where supported or use the clipboard.
 
 Speech recognition can run locally with **Faster-Whisper** or **whisper.cpp**, so your recordings do not need to leave your computer. WayVoice is designed around **GNOME, GTK4/libadwaita and Wayland**, while keeping a simple clipboard fallback when automatic paste is not available.
 
-If you are looking for a Linux alternative to built-in voice typing on other desktop operating systems — especially one based on local Whisper speech recognition rather than a cloud service — that is the problem WayVoice is trying to solve.
+WayVoice is currently alpha software. GNOME Wayland is the primary tested environment; KDE, wlroots and installed Flatpak scenarios still need desktop acceptance. A successful build does not establish compatibility with every compositor.
 
 ## Why WayVoice?
 
@@ -42,6 +42,11 @@ If you are looking for a Linux alternative to built-in voice typing on other des
 - **Spoken punctuation** — commands such as “comma”, “question mark”, “точка” and “запятая”.
 - **Fast repeat dictation** — Faster-Whisper can keep the selected model warm in memory between recordings.
 - **Model management in the UI** — download models, see disk usage and free space, cancel downloads and remove models you no longer need.
+- **Preparation guidance** — check runtime, model, recording, clipboard and shortcut readiness from Home.
+- **Recognition presets** — Fast / Balanced / More accurate edit the settings draft without silently saving or downloading.
+- **Settings protection** — Save applies changes; leaving with unsaved edits prompts you. Downloading a model does not select it for saved dictation settings.
+- **Compact status indicator** — optional ordinary window; no transcript display or automatic raising.
+- **Diagnostics preview** — inspect a report before copying or saving it.
 - **GNOME-style interface** — GTK4 + libadwaita, with Russian and English UI.
 - **No forced downloads from the hotkey** — if a model is missing, WayVoice tells you instead of silently downloading gigabytes.
 - **Useful without automatic paste** — recognized text stays in the clipboard if simulated `Ctrl+V` is unavailable.
@@ -50,14 +55,17 @@ If you are looking for a Linux alternative to built-in voice typing on other des
 
 ### Fedora 44
 
-New releases will include an `.rpm` package. Install it with
-`sudo dnf install ./wayvoice-*.rpm`. RPM builds target Fedora 44; other RPM-based
+Download the `.rpm` from [GitHub Releases](https://github.com/pavlenkosa/wayvoice/releases). Version 0.6.8 includes DEB, RPM, source archives and SHA-256 checksums. Install with:
+
+```bash
+sudo dnf install ./wayvoice-0.6.8-1.fc44.x86_64.rpm
+```
+
+RPM builds target Fedora 44; other RPM-based
 distributions are not yet validated. User services follow the distribution's
 preset policy; launch WayVoice from the application menu after installation.
 
-To build an RPM in a Fedora environment, install `rpm-build`, `gcc`, `python3`,
-`systemd-rpm-macros`, `tar` and `gzip`, then run `make rpm`. The package and its
-SHA-256 checksum appear in `dist/`. Building does not install or start anything.
+Installation, upgrade, removal and reinstallation were checked in a disposable Fedora 44 container, including GTK/Adwaita imports. That does not verify a live Fedora desktop, microphone, udev permissions or automatic paste.
 
 ### Debian / Ubuntu
 
@@ -75,11 +83,20 @@ wayvoice-settings
 
 The recognition runtime and model weights are downloaded only when they are needed and you choose to download them.
 
-### Flatpak and other distributions
+### Flatpak / Flathub status
 
-The repository includes a Flatpak manifest at [`io.github.stepan.WayVoice.json`](io.github.stepan.WayVoice.json). WayVoice can run without systemd, which keeps the application usable in sandboxed environments as well.
+The [Flatpak manifest](io.github.stepan.WayVoice.json) is experimental local-build packaging, not a Flathub-ready submission. There is no supported Flathub install command yet.
 
-Prebuilt release assets are currently published on the [Releases](https://github.com/pavlenkosa/wayvoice/releases) page.
+The sandbox runs without a systemd user manager. Automatic host shortcut registration and the bundled native `ydotool` helper are unavailable there: use a desktop-configured shortcut and manual clipboard paste. Models are downloaded only by an explicit action; the Flatpak runtime includes the recognition dependencies.
+
+Before submission, the maintainer needs to:
+
+- Prepare an offline-buildable manifest with declared dependency sources instead of networked `pip install`, and pin the application to published source rather than a local directory.
+- Resolve the App ID: `io.github.stepan.WayVoice` does not match the current `pavlenkosa/wayvoice` repository namespace. Check ownership or an exception before choosing an ID; renaming affects sandbox data paths and desktop integration.
+- Complete screenshots, license installation for bundled components and Flathub lint checks.
+- Verify installed microphone capture, model download/cancellation, clipboard and manual shortcuts on target desktops. Automatic paste must not require an undocumented privileged host setup.
+
+See the official [requirements](https://docs.flathub.org/docs/for-app-authors/requirements), [maintenance guidance](https://docs.flathub.org/docs/for-app-authors/maintenance) and [submission process](https://docs.flathub.org/docs/for-app-authors/submission). Current policy prohibits AI-generated or AI-assisted submission manifests and AI-automated submission interactions; known AI contributions elsewhere must be disclosed by the human submitter. Acceptance is decided by Flathub reviewers.
 
 ## Compact status indicator
 
@@ -92,8 +109,8 @@ occlusion and any always-on-top option are controlled by your desktop.
 
 ## How it works
 
-1. Open WayVoice and choose a speech-recognition engine and model.
-2. Set the global dictation hotkey.
+1. Open WayVoice and use Home preparation guidance to prepare the recognition runtime and explicitly download a model.
+2. Choose the engine/model or a preset, then **Save**. Set the dictation hotkey; on KDE/wlroots or Flatpak, bind the command shown by Settings in your desktop.
 3. Put the cursor into any text field.
 4. Press the hotkey and speak.
 5. Press it again to stop recording.
@@ -110,7 +127,7 @@ wayvoice model --download
 
 | Area | What WayVoice provides |
 | --- | --- |
-| Dictation | Global hotkey, start/stop recording, cancellation and recognition timeout |
+| Dictation | Toggle recording, CLI start/stop/cancel and recognition timeout; shortcut setup depends on desktop |
 | Speech recognition | Faster-Whisper, whisper.cpp or any external command |
 | Languages | All 100 languages supported by Whisper, with automatic detection |
 | Punctuation | Automatic punctuation plus spoken punctuation commands |
@@ -187,13 +204,15 @@ Core runtime tools include:
 
 If `ydotool` is unavailable, dictation still works — the recognized text is copied to the clipboard.
 
-The Debian package also includes a bundled `ydotool` fallback for systems that do not provide a suitable package. A system-installed copy is preferred when available.
+Native Debian and Fedora packages also include a bundled `ydotool` fallback for systems that do not provide a suitable package. A system-installed copy is preferred when available.
 
 ## Privacy
 
 With a local recognition engine selected, WayVoice does **not** send your recordings to a cloud transcription service.
 
-Network access is used to download the speech-recognition runtime and model files when you explicitly request them. Recognition itself runs locally.
+Network access is used to download the speech-recognition runtime and model files when you explicitly request them. Recognition itself runs locally. External commands are user-supplied programs and may have their own network behavior.
+
+Temporary recordings are cleaned up after processing/cancellation. Dictation text is hidden in notifications by default; showing it is opt-in. Clipboard content remains available to other applications and clipboard managers according to desktop behavior.
 
 That makes WayVoice suitable for people who want **private offline speech-to-text on Linux** without routing everyday dictation through a third-party API.
 
@@ -241,27 +260,37 @@ wayvoice model --download
 
 **Recognition takes a long time on the first use**
 
-The model may still need to be downloaded or loaded into memory. Keeping the Faster-Whisper worker warm makes later dictations faster.
+First verify that runtime and model preparation have completed. Dictation never downloads missing weights automatically. Loading a ready model into memory can still take time; the warm worker makes repeated dictation faster.
 
 **Need more detail?**
 
 See the [changelog](CHANGELOG.md), open an [issue](https://github.com/pavlenkosa/wayvoice/issues), or inspect the service log shown above.
 
+## Planned capabilities
+
+These are directions, not currently implemented features or release promises:
+
+1. Reliable hold-to-talk and shortcut cancellation, with truthful desktop capability reporting.
+2. Microphone selection and clear active-device feedback.
+3. Vocabulary corrections for names and technical terms.
+4. Additional engines such as Parakeet, after language/latency/quality measurements.
+5. Opt-in local text history, followed by application-specific formatting and profiles.
+
+Streaming and optional LLM cleanup come later. No general plugin framework or extension store is implemented. Current work prioritizes acceptance of the existing input loop over adding more settings.
+
 ## Development and contributing
 
-Contributions, bug reports and testing on different Linux/Wayland setups are welcome.
+Contributions, bug reports and testing on different Linux/Wayland setups are welcome. Include version, package type, desktop/session, recognition engine and whether text reached the clipboard; redact dictated text from reports.
 
-- [Contributing guide](CONTRIBUTING.md)
-- [Changelog](CHANGELOG.md)
-- [Security policy](SECURITY.md)
-- [Releases](https://github.com/pavlenkosa/wayvoice/releases)
+```bash
+make lint
+make test
+make deb
+```
 
-## License
+For RPM builds on Fedora, install `rpm-build`, `gcc`, `python3`, `systemd-rpm-macros`, `tar` and `gzip`, then run `make rpm`. With Docker, `./scripts/build-rpm-container.sh` builds in Fedora's official image. Packages and checksums go into `dist/`; the build scripts do not install packages on the host or start its services.
 
-WayVoice is licensed under the **GNU Affero General Public License v3.0 or later** (`AGPL-3.0-or-later`).
-
-See [LICENSE](LICENSE) and [third_party/ydotool](third_party/ydotool/README.wayvoice.md) for details.
-
+Tests requiring GTK bindings are skipped when those bindings are absent. Unit tests do not replace installed desktop, microphone or insertion checks.
 
 Faster-Whisper selects its compute type automatically: `int8` on CPU and `float16`
 on CUDA, in both worker and one-shot modes. Legacy `compute_type_cpu` and
@@ -277,3 +306,14 @@ and checking that set, including Python 3.11 compatibility.
 Debian builds honor `SOURCE_DATE_EPOCH`; otherwise they use the Git commit timestamp
 or, for a source archive, the timestamp of `app/src/wayvoice/__init__.py`. Use the same
 source, compiler/toolchain and epoch when comparing artifacts from repeated builds.
+
+- [Contributing guide](CONTRIBUTING.md)
+- [Changelog](CHANGELOG.md)
+- [Security policy](SECURITY.md)
+- [Releases](https://github.com/pavlenkosa/wayvoice/releases)
+
+## License
+
+WayVoice is licensed under the **GNU Affero General Public License v3.0 or later** (`AGPL-3.0-or-later`).
+
+See [LICENSE](LICENSE) and [third_party/ydotool](third_party/ydotool/README.wayvoice.md) for details.
