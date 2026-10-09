@@ -34,7 +34,7 @@ class SettingsPage:
         scroller = Gtk.ScrolledWindow()
         scroller.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         page = Adw.PreferencesPage()
-        page.set_halign(Gtk.Align.CENTER)
+        page.set_halign(Gtk.Align.FILL)
         clamp = Adw.Clamp(maximum_size=780, tightening_threshold=600)
         clamp.set_child(page)
         scroller.set_child(clamp)

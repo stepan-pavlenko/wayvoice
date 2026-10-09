@@ -64,6 +64,15 @@ class CompositionTests(unittest.TestCase):
         self.assertFalse(hasattr(self.window, 'model'))
         self.assertEqual([s[0] for s in self.tasks.sources], ['idle','idle',650,900])
 
+    def test_settings_uses_available_width_within_clamp(self):
+        clamp = self.window.settings.root.get_child().get_child()
+        page = clamp.get_child()
+        for width in (420, 1600):
+            with self.subTest(width=width):
+                clamp.allocate(width, 900, -1, None)
+                self.assertGreaterEqual(page.get_width(), min(width, 780) - 10)
+                self.assertLessEqual(page.get_width(), 780)
+
     def test_save_visibility_follows_navigation(self):
         self.assertFalse(self.window.save_button.get_visible())
         self.window.stack.set_visible_child_name('settings')
