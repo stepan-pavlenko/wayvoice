@@ -58,7 +58,7 @@ static void restore_terminal() {
 static void handle_signal(int sig) {
     if (sig == SIGINT) {
         restore_terminal();
-        exit(0);
+        _exit(0);
     }
 }
 
@@ -84,11 +84,12 @@ int tool_stdin(int argc, char **argv) {
 
     while (1) {
 		char buffer[4] = {0};
-		read(STDIN_FILENO, buffer, 3);
+		if (read(STDIN_FILENO, buffer, 3) <= 0) break;
 
 		printf("Key code: %d %d %d\n", buffer[0], buffer[1], buffer[2]);
 
-		char c = buffer[0];
+		unsigned char c = (unsigned char)buffer[0];
+		if (c >= sizeof(ascii2keycode_map) / sizeof(ascii2keycode_map[0])) continue;
 
 		// Convert char to keycode and flags based on the ascii2keycode_map
 		int kdef = ascii2keycode_map[(int)c];

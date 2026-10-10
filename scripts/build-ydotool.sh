@@ -8,8 +8,7 @@
 # licence, and for which upstream revision they are.
 #
 # Two programs, no dependencies beyond libc, so this is a compiler invocation and
-# not a build system. Nothing is patched, so this script never has to know what
-# upstream changed.
+# not a build system. Downstream safety changes are documented with the sources.
 set -eu
 
 ROOT="$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)"
@@ -25,8 +24,8 @@ if [ ! -d "$SRC/Client" ] || [ ! -f "$SRC/Daemon/ydotoold.c" ]; then
     exit 1
 fi
 
-# No -Wall: the sources are vendored unpatched, so their warnings are not ours to
-# fix here, and four of them on every package build would drown out the ones from
+# No -Wall: existing upstream warnings on every package build would drown out
+# the ones from
 # our own code. -Werror would fail the build on upstream's code, which is not a
 # thing a package that vendors code should be doing either.
 #
