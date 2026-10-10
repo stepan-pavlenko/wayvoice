@@ -114,7 +114,7 @@ jobs:
             if [ "$TAG_SHA" != "$GITHUB_SHA" ]; then
               echo "Tag $TAG points at ${TAG_SHA:0:7}, this run is at ${GITHUB_SHA:0:7}." >&2
               echo "A version already released from another commit is not this" >&2
-              echo "commit's to publish. Move the tag, or cut a new version." >&2
+              echo "commit's to publish. Cut a new version; do not move the tag." >&2
               exit 1
             fi
           elif $FROM_TAG; then

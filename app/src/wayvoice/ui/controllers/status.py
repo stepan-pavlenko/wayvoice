@@ -2,7 +2,6 @@
 from ..setup_presentation import model_missing, paint_setup
 import platform
 import os
-import subprocess
 import time
 
 import gi
