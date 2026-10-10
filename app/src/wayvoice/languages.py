@@ -127,7 +127,7 @@ def normalize(value: str | None) -> str:
     Anything unknown, empty or missing becomes :data:`AUTO`: guessing a language for the
     model is worse than letting it detect one.
     """
-    code = (value or "").strip().lower().replace("_", "-")
+    code = value.strip().lower().replace("_", "-") if isinstance(value, str) else ""
     if not code or code == AUTO:
         return AUTO
     base = code.split("-")[0]
@@ -137,7 +137,7 @@ def normalize(value: str | None) -> str:
 
 
 def is_valid(value: str | None) -> bool:
-    code = (value or "").strip().lower()
+    code = value.strip().lower() if isinstance(value, str) else ""
     return code in NAMES or code == AUTO
 
 

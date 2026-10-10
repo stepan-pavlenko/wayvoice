@@ -739,7 +739,7 @@ def resolve_language(value: str | None) -> str:
     about *interface* text, not about what can be dictated - those are
     independent, and a Ukrainian user can perfectly well want an English UI.
     """
-    value = (value or languages.AUTO).strip().lower()
+    value = value.strip().lower() if isinstance(value, str) else languages.AUTO
     if value in _TRANSLATIONS:
         return value
     candidates: list[str] = [_locale_language(locale.getlocale)]

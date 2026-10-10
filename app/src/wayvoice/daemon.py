@@ -14,6 +14,7 @@ import time
 import traceback
 import uuid
 from pathlib import Path
+from typing import Any
 
 from . import __version__
 from .audio import AudioRecorder
@@ -90,7 +91,7 @@ def _recording_limit(cfg: dict[str, Any]) -> int:
     raw = cfg.get("max_recording_sec", _CONFIG_DEFAULTS["max_recording_sec"])
     try:
         seconds = int(raw)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):
         raise ValueError(
             f"max_recording_sec must be a number of seconds, not {raw!r}"
         ) from None
