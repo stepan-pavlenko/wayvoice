@@ -106,27 +106,38 @@ Choose **Open indicator** in the WayVoice menu, or run `wayvoice-settings --indi
 It shows recording, recognition, preparation and attention states without showing your
 transcript. You can close Settings and keep this window open; closing the indicator
 stops its monitoring, not the background daemon. Status updates never raise the window
-or request activation. It is a normal window: placement, focus on explicit opening,
-occlusion and any always-on-top option are controlled by your desktop.
+or request activation. Drag the compact status row to move it; expand Details only when needed.
+The window-actions button (or Shift+F10) opens the desktop window menu. In KDE, choose
+**More Actions → Keep Above** to keep it above ordinary windows for its lifetime.
+This is a desktop-controlled option, not a universal Wayland always-on-top API.
 
 ## KDE Plasma
 
-On Plasma, assign the command shown beside the shortcut in WayVoice Settings in
+In WayVoice Settings, click **Configure in KDE** and assign a key in the Plasma
+shortcut settings that open. WayVoice registers its dictation action through the
+GlobalShortcuts portal and displays the actual desktop binding. The daemon owns
+the portal session, so closing Settings leaves the shortcut working. On daemon
+restart, saved actions are restored without automatically opening a chooser; if
+the desktop does not restore an action, configure it again explicitly.
+
+If the portal is unavailable, bind `wayvoice toggle` manually in
 **System Settings → Keyboard → Shortcuts → Add New → Command or Script**.
-The saved key in WayVoice is the desired binding; Plasma owns the active shortcut.
-Manual registration is expected and does not make saving other settings fail.
+For Flatpak, use the command shown by WayVoice instead of the native command.
+Remove any old manual binding before assigning the same key through the portal
+to avoid two dictation actions on one key.
 
 Use **Ctrl+V** for ordinary editors and **Ctrl+Shift+V** for Konsole. If automatic
 paste is unavailable, the recognized text remains in the clipboard for manual paste.
 The helper needs access to `/dev/uinput`; diagnostics distinguish clipboard delivery
-from automatic paste. GlobalShortcuts portal registration is not implemented yet.
-Plasma 6.3.6 Wayland service/environment checks have passed; this is not a completed
+from automatic paste.
+Plasma 6.3.6 Wayland service/environment and safe portal session checks have passed;
+actual shortcut assignment/activation still needs desktop acceptance. This is not a completed
 installed dictation and paste acceptance test.
 
 ## How it works
 
 1. Open WayVoice and use Home preparation guidance to prepare the recognition runtime and explicitly download a model.
-2. Choose the engine/model or a preset, then **Save**. Set the dictation hotkey; on KDE/wlroots or Flatpak, bind the command shown by Settings in your desktop.
+2. Choose the engine/model or a preset, then **Save**. Set the dictation hotkey; on KDE use **Configure in KDE**. On other manual backends, bind the command shown by Settings in your desktop.
 3. Put the cursor into any text field.
 4. Press the hotkey and speak.
 5. Press it again to stop recording.
