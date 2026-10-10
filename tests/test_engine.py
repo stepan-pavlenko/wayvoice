@@ -133,6 +133,12 @@ class LanguageResolutionTests(unittest.TestCase):
     def test_single_language_model_wins(self):
         self.assertEqual(_language({"model": "small.en", "language": "ru"}), "en")
 
+    def test_inactive_model_does_not_override_other_engine_language(self):
+        for engine in ('whisper-cpp', 'custom'):
+            with self.subTest(engine=engine):
+                self.assertEqual(_language({'engine': engine, 'model': 'small.en',
+                                            'language': 'ru'}), 'ru')
+
     def test_spoken_punctuation_follows_the_recognition_language(self):
         cfg = {"language": "en", "append_space": False}
         self.assertEqual(_postprocess("hello comma world", cfg), "Hello, world.")

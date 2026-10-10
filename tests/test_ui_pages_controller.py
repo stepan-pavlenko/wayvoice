@@ -92,6 +92,17 @@ class CompositionTests(unittest.TestCase):
         self.assertFalse(self.window.settings.model.get_visible())
         self.assertTrue(self.window.settings.cpp_binary.get_visible())
 
+    def test_language_draft_follows_active_engine(self):
+        ctx = self.window.context
+        with (mock.patch.object(ctx.models, '_refresh_model_state'),
+              mock.patch.object(ctx.preferences, '_poll_engine_settings')):
+            self.window.settings.model.set_selected(6)  # tiny.en
+            self.assertEqual(ctx.preferences._draft_values()['language'], 'en')
+            for index in (1, 2):  # whisper.cpp, external command
+                self.window.settings.engine.set_selected(index)
+                self.window.settings.language.select_code('ru')
+                self.assertEqual(ctx.preferences._draft_values()['language'], 'ru')
+
     def test_disposal_removes_startup_and_poll_sources(self):
         self.window._dispose_ui()
         self.window._dispose_ui()

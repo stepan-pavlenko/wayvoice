@@ -26,6 +26,14 @@ class ShortcutBackendTests(unittest.TestCase):
             self.assertIn("'/opt/Voice App/wayvoice' toggle", detail)
             run.assert_not_called()
 
+    def test_kde_guidance_names_desktop_settings_and_preserves_command(self):
+        with mock.patch.dict(os.environ, {'XDG_CURRENT_DESKTOP': 'KDE'}):
+            self.assertTrue(shortcut.manual_shortcut_required())
+            hint = shortcut.manual_shortcut_hint('en')
+        self.assertIn('System Settings', hint)
+        self.assertIn("'/opt/Voice App/wayvoice' toggle", hint)
+        self.assertIn('does not register', hint)
+
     def test_flatpak_offers_host_command_without_probing_or_writing(self):
         with mock.patch.dict(os.environ, {"FLATPAK_ID": "io.github.stepan.WayVoice"}), \
              mock.patch.object(shortcut.subprocess, "run") as run:

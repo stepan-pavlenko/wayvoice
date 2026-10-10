@@ -58,12 +58,24 @@ def manual_command() -> str:
     return shlex.join([command_path("wayvoice"), "toggle"])
 
 
+def manual_shortcut_required() -> bool:
+    """Whether registration belongs to desktop settings, rather than GNOME."""
+    desktop = os.environ.get("XDG_CURRENT_DESKTOP", "").upper().split(":")
+    return bool(os.environ.get("FLATPAK_ID") or Path("/.flatpak-info").is_file()
+                or "GNOME" not in desktop)
+
+
+def manual_shortcut_hint(language: str | None = None) -> str:
+    desktop = os.environ.get("XDG_CURRENT_DESKTOP", "").upper().split(":")
+    key = "shortcut.kde_manual" if "KDE" in desktop else "shortcut.manual_required"
+    return tr(key, language, command=manual_command())
+
+
 def shortcut_support(language: str | None = None) -> tuple[bool, str]:
     """Check the active native GNOME backend, without changing any settings."""
     command = manual_command()
-    desktop = os.environ.get("XDG_CURRENT_DESKTOP", "").upper().split(":")
-    if os.environ.get("FLATPAK_ID") or Path("/.flatpak-info").is_file() or "GNOME" not in desktop:
-        return False, tr("shortcut.manual_required", language, command=command)
+    if manual_shortcut_required():
+        return False, manual_shortcut_hint(language)
     try:
         owner = subprocess.run(
             ["gdbus", "call", "--session", "--dest", "org.freedesktop.DBus",

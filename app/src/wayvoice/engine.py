@@ -1201,7 +1201,9 @@ def _language(cfg: dict[str, Any]) -> str:
     with ``-l auto``.
     """
     model = str(cfg.get("model", "small"))
-    return languages.normalize(forced_language(model) or cfg.get("language"))
+    engine = engine_from_config(cfg)
+    forced = forced_language(model) if engine and engine.uses_models else None
+    return languages.normalize(forced or cfg.get("language"))
 
 
 def _transcribe_via_worker(audio: Path, cfg: dict[str, Any], cancel_event: Event | None) -> str:

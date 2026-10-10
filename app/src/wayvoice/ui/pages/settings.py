@@ -10,7 +10,7 @@ from ... import languages
 from ...config import number
 from ...engine import DEFAULT_ENGINE
 from ...models import MODEL_PRESETS, PRESET_LABELS, preset_index
-from ...shortcut import label_for
+from ...shortcut import label_for, manual_shortcut_required, manual_shortcut_hint
 from ..settings_values import DEVICES, DEVICE_NAMES, PASTE_MODES, RECORD_VALUES, TIMEOUT_VALUES, UI_LANGUAGE_IDS
 from ..widgets.labels import nearest_index, index_or_zero
 from ..widgets.language_picker import LanguagePicker, engine_choices, language_choices
@@ -211,6 +211,12 @@ class SettingsPage:
         shortcut_btn.connect("clicked", self.ctx.shortcut._open_shortcut_capture)
         self.shortcut_row.add_suffix(shortcut_btn)
         control_group.add(self.shortcut_row)
+        if manual_shortcut_required():
+            self.shortcut_help = Gtk.Label(
+                label=manual_shortcut_hint(self.ctx.state.ui_lang),
+                wrap=True, selectable=True, xalign=0,
+                margin_top=12, margin_bottom=12, margin_start=12, margin_end=12)
+            control_group.add(self.shortcut_help)
         paste_labels = ["Ctrl+V", "Ctrl+Shift+V", self.ctx.state.t("paste.clipboard")]
         self.paste = Adw.ComboRow(title=self.ctx.state.t("settings.paste"))
         self.paste.set_model(Gtk.StringList.new(paste_labels))

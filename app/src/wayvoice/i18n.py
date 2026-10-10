@@ -727,6 +727,9 @@ _EN.update({'indicator.title': 'WayVoice — indicator',
 _RU.update({"indicator.open_app": "Открыть WayVoice"})
 _EN.update({"indicator.open_app": "Open WayVoice"})
 
+_RU.update({"shortcut.kde_manual": "В KDE Plasma назначьте клавишу в Параметрах системы → Клавиатура → Комбинации клавиш → Добавить → Команда или сценарий. Команда: {command}. Выбор клавиши в WayVoice сохраняет желаемую комбинацию, но не регистрирует её в Plasma."})
+_EN.update({"shortcut.kde_manual": "In KDE Plasma, bind a key in System Settings → Keyboard → Shortcuts → Add New → Command or Script. Command: {command}. Choosing a key in WayVoice saves the desired binding but does not register it in Plasma."})
+
 _TRANSLATIONS = {"ru": _RU, "en": _EN}
 
 

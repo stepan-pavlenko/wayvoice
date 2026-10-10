@@ -69,6 +69,27 @@ class SaveGuardTests(unittest.TestCase):
         window.state.cfg = {}
         return window
 
+    def test_manual_desktop_save_succeeds_without_attempting_registration(self):
+        ctx = self._window()
+        controller = ctx.preferences
+        updates = {'shortcut': 'F8', 'ui_language': 'ru'}
+        with (mock.patch.object(controller, '_selected_engine_uses_models', return_value=False),
+              mock.patch.object(ctx.models, '_selected_model_preset', return_value={}),
+              mock.patch.object(controller, '_draft_values', return_value=updates),
+              mock.patch.object(controller, '_queue_mutation') as queue,
+              mock.patch.object(controller, '_prepare_selected_engine'),
+              mock.patch('wayvoice.ui.controllers.settings.load_config', return_value={}),
+              mock.patch('wayvoice.ui.controllers.settings.save_config') as save,
+              mock.patch('wayvoice.ui.controllers.settings.manual_shortcut_required', return_value=True),
+              mock.patch('wayvoice.ui.controllers.settings.apply_shortcut') as apply):
+            controller._save()
+            cfg, ok, message = queue.call_args.args[0]()
+        self.assertTrue(ok)
+        self.assertEqual(message, '')
+        self.assertEqual(cfg['ui_language'], 'ru')
+        save.assert_called_once_with(cfg)
+        apply.assert_not_called()
+
     def test_an_empty_custom_model_path_is_refused(self):
         window = self._window()
         window.settings.custom_model = FakeEntry("   ")
