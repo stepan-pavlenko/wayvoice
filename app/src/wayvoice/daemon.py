@@ -37,7 +37,7 @@ from .injector import InjectionError, inject
 from .i18n import tr
 from .notify import notify, reset_notification_id
 from .protocol import owner_lock_path, socket_path
-from .shortcut import label_for
+from .shortcut import label_for, portal_shortcut_desktop
 
 #: How long one client may take to send its request line. Generous for a command of
 #: a few bytes over a unix socket, and short enough that a client which connects and
@@ -154,6 +154,8 @@ class WayVoiceDaemon:
         #: alone let two callers through, which started two downloads of one file.
         self._prepare_running = False
         self._prepare_cancel = threading.Event()
+        self._shortcut_portal = None
+        self._commands = None
 
     def prepare_on_start(self) -> None:
         """Get ready for the first dictation, now that this daemon owns the session.
@@ -392,7 +394,28 @@ class WayVoiceDaemon:
             "engine": engine_status(cfg),
             "model": self._model_report(cfg),
             "shortcut": label_for(str(cfg.get("shortcut", "F8"))),
+            "shortcut_portal": self._shortcut_portal.snapshot() if self._shortcut_portal is not None else None,
         }
+
+    def _portal_activation(self):
+        # Portal callbacks must never block on microphone or ASR work.
+        if self._shutdown.is_set() or self._commands is None:
+            return
+        try:
+            self._commands.put_nowait((None, "toggle"))
+        except queue.Full:
+            self.last_warning = tr("daemon.too_busy", self._language())
+
+    def _portal_owner(self):
+        if self._shortcut_portal is None:
+            from .shortcut_portal import ShortcutPortal
+            self._shortcut_portal = ShortcutPortal(self._portal_activation)
+        return self._shortcut_portal
+
+    def _restore_portal_shortcut(self):
+        cfg = load_config()
+        if portal_shortcut_desktop() and cfg.get("shortcut_backend") == "portal":
+            self._portal_owner().start(str(cfg.get("shortcut", "F8")))
 
     def _cancel_record_timer(self) -> None:
         timer = self._record_timer
@@ -723,6 +746,16 @@ class WayVoiceDaemon:
         name, _, target_json = raw.partition(" ")
         addressed = name.lower() in {"prepare-model", "cancel-download", "delete-model"} and bool(target_json)
         command = name.lower() if addressed else raw.lower()
+        if command == "configure-shortcut":
+            if not portal_shortcut_desktop():
+                return {"ok": False, "error": "Desktop shortcut chooser is available in KDE Plasma."}
+            cfg = load_config()
+            if config_error():
+                return {"ok": False, "error": config_error()}
+            portal = self._portal_owner()
+            if not portal.configure(str(cfg.get("shortcut", "F8"))):
+                return {"ok": False, "error": portal.snapshot().get("error") or "Shortcut configuration is unavailable."}
+            return {"ok": True}
         if command == "toggle-clipboard":
             return self.toggle(delivery_mode="copy")
         if command == "toggle":
@@ -877,11 +910,12 @@ class WayVoiceDaemon:
                 reply = self.dispatch(command)
             except Exception as exc:
                 reply = {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
-            try:
-                _send(conn, reply)
-            except OSError:
-                pass
-            _close(conn)
+            if conn is not None:
+                try:
+                    _send(conn, reply)
+                except OSError:
+                    pass
+                _close(conn)
 
     def _live_daemon(self, path: Path) -> bool:
         """Return whether another daemon already owns ``path``.
@@ -960,7 +994,9 @@ class WayVoiceDaemon:
             target=self._command_loop, args=(commands,), daemon=True
         )
         worker.start()
+        self._commands = commands
         try:
+            self._restore_portal_shortcut()
             while not self._shutdown.is_set():
                 try:
                     conn, _ = server.accept()
@@ -1039,6 +1075,12 @@ class WayVoiceDaemon:
         recognition.
         """
         self._shutdown.set()
+        self._commands = None
+        if self._shortcut_portal is not None:
+            try:
+                self._shortcut_portal.close()
+            except Exception as exc:
+                print(f"WayVoice: could not close shortcut session: {exc}", file=sys.stderr)
         self._record_delivery_mode = None
         deadline = time.monotonic() + JOB_DRAIN_TIMEOUT
         self._shutdown_deadline = deadline

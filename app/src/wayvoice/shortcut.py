@@ -58,6 +58,11 @@ def manual_command() -> str:
     return shlex.join([command_path("wayvoice"), "toggle"])
 
 
+def portal_shortcut_desktop() -> bool:
+    """KDE offers a desktop-mediated chooser; availability is checked by daemon."""
+    return "KDE" in os.environ.get("XDG_CURRENT_DESKTOP", "").upper().split(":")
+
+
 def manual_shortcut_required() -> bool:
     """Whether registration belongs to desktop settings, rather than GNOME."""
     desktop = os.environ.get("XDG_CURRENT_DESKTOP", "").upper().split(":")

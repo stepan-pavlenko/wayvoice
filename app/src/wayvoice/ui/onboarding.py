@@ -8,7 +8,7 @@ from ..config import load_config
 from ..engine import TranscriptionCancelled
 from ..i18n import tr
 from ..model_store import human_size
-from ..shortcut import manual_shortcut_required, manual_shortcut_hint
+from ..shortcut import manual_shortcut_required, manual_shortcut_hint, portal_shortcut_desktop
 from .async_tasks import TaskRunner
 
 
@@ -156,7 +156,8 @@ class OnboardingWindow(Adw.ApplicationWindow):
     def _ready_page(self):
         self.body.append(self._label(self.t('ready_detail' if self.prepared else 'later_detail')))
         if manual_shortcut_required():
-            guidance = self._label(manual_shortcut_hint(self.language))
+            guidance = self._label(self.t('kde_shortcut') if portal_shortcut_desktop()
+                                   else manual_shortcut_hint(self.language))
             guidance.set_selectable(True)
             self.body.append(guidance)
         else:

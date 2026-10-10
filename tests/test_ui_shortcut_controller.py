@@ -47,7 +47,8 @@ class OpenCaptureTests(unittest.TestCase):
     def test_the_row_opens_the_capture_window(self):
         window = controller_context()
         import wayvoice.ui.dialogs.shortcut_window as shortcut_window
-        with mock.patch.object(shortcut_window, "shortcut_capture") as shortcut_capture:
+        with mock.patch.object(shortcut_window, "shortcut_capture") as shortcut_capture, \
+                mock.patch("wayvoice.ui.controllers.shortcut.portal_shortcut_desktop", return_value=False):
             window.shortcut._open_shortcut_capture()
         shortcut_capture.assert_called_once_with(window.window, window.state.shortcut_binding, window.state.t, window.shortcut._disable_shortcut, window.shortcut._capture_shortcut_key)
 

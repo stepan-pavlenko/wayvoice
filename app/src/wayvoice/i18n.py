@@ -824,6 +824,37 @@ _EN.update({'onboard.step': 'Step {number} of 4',
  'onboard.cancelling': 'Cancelling…',
  'onboard.failed': 'Could not complete: {reason}'})
 
+_RU.update({'onboard.kde_shortcut': 'В настройках WayVoice нажмите «Настроить в KDE» и выберите горячую клавишу в системном окне Plasma.',
+ 'indicator.window_actions': 'Действия окна',
+ 'indicator.window_actions_hint': 'Меню рабочего стола: выберите «Поверх остальных». '
+                                  'Перетаскивайте индикатор за состояние.',
+ 'indicator.details': 'Подробности',
+ 'indicator.window_actions_unavailable': 'Меню окна недоступно. В KDE используйте Alt+F3 → '
+                                         'Дополнительные действия → Поверх остальных.',
+ 'shortcut.portal.configure': 'Настроить в KDE',
+ 'shortcut.portal.choose': 'Выберите горячую клавишу в настройках KDE Plasma.',
+ 'shortcut.portal.unavailable': 'Системная настройка клавиши недоступна. Можно назначить команду '
+                                'WayVoice вручную.',
+ 'shortcut.portal.hint': 'Нажмите «Настроить в KDE» и назначьте клавишу в открывшихся системных '
+                         'настройках. WayVoice покажет фактическую комбинацию; она работает, пока '
+                         'запущен daemon, даже при закрытом окне.',
+ 'shortcut.portal.active': 'Назначено в KDE: {binding}'})
+_EN.update({'onboard.kde_shortcut': 'In WayVoice settings, click Configure in KDE and choose a shortcut in Plasma desktop settings.',
+ 'indicator.window_actions': 'Window actions',
+ 'indicator.window_actions_hint': 'Desktop window menu: choose Keep Above. Drag the indicator by '
+                                  'its status.',
+ 'indicator.details': 'Details',
+ 'indicator.window_actions_unavailable': 'Window menu unavailable. In KDE use Alt+F3 → More '
+                                         'Actions → Keep Above.',
+ 'shortcut.portal.configure': 'Configure in KDE',
+ 'shortcut.portal.choose': 'Choose a shortcut in KDE Plasma settings.',
+ 'shortcut.portal.unavailable': 'Desktop shortcut configuration is unavailable. You can bind the '
+                                'WayVoice command manually.',
+ 'shortcut.portal.hint': 'Click Configure in KDE and assign a key in the desktop settings. '
+                         'WayVoice shows the actual binding; it works while the daemon runs, even '
+                         'with this window closed.',
+ 'shortcut.portal.active': 'Assigned in KDE: {binding}'})
+
 _TRANSLATIONS = {"ru": _RU, "en": _EN}
 
 
