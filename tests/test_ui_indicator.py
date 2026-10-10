@@ -68,7 +68,8 @@ class IndicatorTests(unittest.TestCase):
                 self.app = app
                 self.present = mock.Mock()
                 created.append(self)
-        with mock.patch('wayvoice.ui.application.WayVoiceWindow', Settings):
+        with mock.patch('wayvoice.ui.application.WayVoiceWindow', Settings), \
+                mock.patch('wayvoice.ui.application.needs_onboarding', return_value=False):
             App.do_activate(fake_app)
         self.assertEqual(len(created), 1)
         self.assertIs(created[0].app, fake_app)

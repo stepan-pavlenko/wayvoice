@@ -81,6 +81,8 @@ Launch **WayVoice** from the application grid, or run:
 wayvoice-settings
 ```
 
+On a fresh configuration, the first-run wizard lets you choose Russian, English or the system interface language, then a Fast / Balanced / More accurate model. **Download and prepare** explicitly starts component and model downloads with progress, cancellation and retry. **Set up later** saves the choice without starting preparation. Existing configurations open normally.
+
 The recognition runtime and model weights are downloaded only when they are needed and you choose to download them.
 
 ### Flatpak / Flathub status

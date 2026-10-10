@@ -730,6 +730,100 @@ _EN.update({"indicator.open_app": "Open WayVoice"})
 _RU.update({"shortcut.kde_manual": "В KDE Plasma назначьте клавишу в Параметрах системы → Клавиатура → Комбинации клавиш → Добавить → Команда или сценарий. Команда: {command}. Выбор клавиши в WayVoice сохраняет желаемую комбинацию, но не регистрирует её в Plasma."})
 _EN.update({"shortcut.kde_manual": "In KDE Plasma, bind a key in System Settings → Keyboard → Shortcuts → Add New → Command or Script. Command: {command}. Choosing a key in WayVoice saves the desired binding but does not register it in Plasma."})
 
+_RU.update({'onboard.step': 'Шаг {number} из 4',
+ 'onboard.welcome': 'Добро пожаловать в WayVoice',
+ 'onboard.welcome_detail': 'Говорите — текст появится в вашем приложении. Распознавание работает '
+                           'на компьютере: записи не отправляются в облако.',
+ 'onboard.language': 'Язык интерфейса',
+ 'onboard.system': 'Как в системе',
+ 'onboard.language_detail': 'Язык речи определяется автоматически. Его можно изменить отдельно в '
+                            'настройках.',
+ 'onboard.continue': 'Продолжить',
+ 'onboard.back': 'Назад',
+ 'onboard.models': 'Выберите модель',
+ 'onboard.models_detail': 'Все три модели распознают разные языки и работают на CPU. Чем больше '
+                          'модель, тем больше нужно памяти и времени. Выбор можно изменить позже.',
+ 'onboard.tiny': 'Быстро · Tiny',
+ 'onboard.tiny_detail': 'Самая лёгкая модель. Для простых фраз; чаще ошибается на сложной речи.',
+ 'onboard.small': 'Баланс · Small',
+ 'onboard.small_detail': 'Рекомендуем для начала: баланс скорости и точности.',
+ 'onboard.medium': 'Точнее · Medium',
+ 'onboard.medium_detail': 'Для сложной речи. Требует больше памяти и работает медленнее.',
+ 'onboard.no_download': 'Выбор модели ничего не скачивает.',
+ 'onboard.prepare': 'Подготовим распознавание',
+ 'onboard.preparing': 'Подготовка распознавания',
+ 'onboard.network': 'По вашей команде WayVoice скачает недостающие компоненты и выбранную модель. '
+                    'Нужен интернет. После подготовки диктовка работает локально.',
+ 'onboard.size': 'Модель: примерно {size}. Компоненты скачиваются дополнительно.',
+ 'onboard.confirm': 'Начать сейчас или вернуться к этому позже?',
+ 'onboard.runtime': 'Подготовка компонентов…',
+ 'onboard.download': 'Загрузка модели…',
+ 'onboard.install': 'Скачать и подготовить',
+ 'onboard.close_detail': 'Отмена остановит эту загрузку. Подготовка компонентов, запущенная ранее, '
+                         'может продолжиться.',
+ 'onboard.cancel': 'Отмена',
+ 'onboard.defer': 'Настроить позже',
+ 'onboard.ready': 'Модель готова',
+ 'onboard.later': 'Продолжим позже',
+ 'onboard.ready_detail': 'Модель скачана. Осталось проверить горячую клавишу и попробовать первую '
+                         'диктовку.',
+ 'onboard.later_detail': 'Выбор сохранится. Диктовка станет доступна после подготовки компонентов '
+                         'и загрузки модели в настройках.',
+ 'onboard.shortcut': 'Проверьте и настройте горячую клавишу в настройках WayVoice.',
+ 'onboard.clipboard': 'Если автоматическая вставка недоступна, распознанный текст останется в '
+                      'буфере обмена для ручной вставки.',
+ 'onboard.open': 'Открыть WayVoice',
+ 'onboard.cancelled': 'Подготовка отменена. Можно повторить попытку или настроить позже.',
+ 'onboard.cancelling': 'Отмена…',
+ 'onboard.failed': 'Не удалось завершить: {reason}'})
+_EN.update({'onboard.step': 'Step {number} of 4',
+ 'onboard.welcome': 'Welcome to WayVoice',
+ 'onboard.welcome_detail': 'Speak and text appears in your application. Recognition runs on your '
+                           'computer; recordings are not sent to the cloud.',
+ 'onboard.language': 'Interface language',
+ 'onboard.system': 'System default',
+ 'onboard.language_detail': 'Speech language is detected automatically. You can change it '
+                            'separately in settings.',
+ 'onboard.continue': 'Continue',
+ 'onboard.back': 'Back',
+ 'onboard.models': 'Choose a model',
+ 'onboard.models_detail': 'All three models support multiple languages and run on CPU. Larger '
+                          'models need more memory and time. You can change your choice later.',
+ 'onboard.tiny': 'Fast · Tiny',
+ 'onboard.tiny_detail': 'The lightest model. For simple phrases; less reliable with complex '
+                        'speech.',
+ 'onboard.small': 'Balanced · Small',
+ 'onboard.small_detail': 'Recommended to start: a balance of speed and accuracy.',
+ 'onboard.medium': 'More accurate · Medium',
+ 'onboard.medium_detail': 'For complex speech. Uses more memory and takes longer.',
+ 'onboard.no_download': 'Selecting a model does not download anything.',
+ 'onboard.prepare': 'Prepare recognition',
+ 'onboard.preparing': 'Preparing recognition',
+ 'onboard.network': 'When you start, WayVoice downloads missing components and your selected '
+                    'model. Internet access is required. Afterwards, dictation works locally.',
+ 'onboard.size': 'Model: about {size}. Components are downloaded separately.',
+ 'onboard.confirm': 'Start now or come back later?',
+ 'onboard.runtime': 'Preparing components…',
+ 'onboard.download': 'Downloading model…',
+ 'onboard.install': 'Download and prepare',
+ 'onboard.close_detail': 'Cancel stops this download. Component preparation started earlier may '
+                         'continue.',
+ 'onboard.cancel': 'Cancel',
+ 'onboard.defer': 'Set up later',
+ 'onboard.ready': 'Model ready',
+ 'onboard.later': 'Continue later',
+ 'onboard.ready_detail': 'Your model is downloaded. Check your shortcut, then try your first '
+                         'dictation.',
+ 'onboard.later_detail': 'Your choice will be saved. Dictation becomes available after preparing '
+                         'components and downloading the model in settings.',
+ 'onboard.shortcut': 'Check and configure your shortcut in WayVoice settings.',
+ 'onboard.clipboard': 'If automatic paste is unavailable, recognized text stays in the clipboard '
+                      'for you to paste.',
+ 'onboard.open': 'Open WayVoice',
+ 'onboard.cancelled': 'Preparation cancelled. Retry or set up later.',
+ 'onboard.cancelling': 'Cancelling…',
+ 'onboard.failed': 'Could not complete: {reason}'})
+
 _TRANSLATIONS = {"ru": _RU, "en": _EN}
 
 
