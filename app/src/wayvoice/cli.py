@@ -30,7 +30,7 @@ from .shortcut import apply_shortcut
 #: cannot drift apart: both are built from this one string.
 _COMMANDS = (
     "toggle|start|stop|cancel|status|model [--download|--cancel]"
-    "|deps [--install ID|--install-all]|settings|engine-setup|engine-status"
+    "|deps [--install ID|--install-all]|settings|engine-setup|engine-status|update [--check|--install]"
 )
 
 
@@ -260,6 +260,10 @@ def main() -> None:
 
     if command in {"settings", "ui", "config"}:
         os.execvp("wayvoice-settings", ["wayvoice-settings"])
+    if command == "update":
+        from .updater import command as update_command
+        update_command(args[1:])
+        return
     if command == "deps":
         _install_deps(args[1:])
         return

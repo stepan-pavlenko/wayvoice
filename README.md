@@ -344,3 +344,26 @@ source, compiler/toolchain and epoch when comparing artifacts from repeated buil
 WayVoice is licensed under the **GNU Affero General Public License v3.0 or later** (`AGPL-3.0-or-later`).
 
 See [LICENSE](LICENSE) and [third_party/ydotool](third_party/ydotool/README.wayvoice.md) for details.
+
+### Native package updates
+
+Use **Check for updates…** in the application menu, or run:
+
+```sh
+wayvoice update --check
+wayvoice update --install
+```
+
+Updates use the latest stable GitHub Release for this system's DEB/RPM architecture.
+Installation is explicit, checks SHA-256 and package metadata, and requests administrator
+permission through the system package manager. Finish dictation and model preparation
+first. New recording is temporarily blocked during installation; the daemon and paste
+helper restart, and the daemon's new version is checked. Reopen Settings afterwards to
+load its new UI. Package-manager transactions are not cancelled by closing Settings.
+
+This mechanism is available in versions shipping the updater. A daemon without the
+update-readiness protocol must first be upgraded using the downloaded package manually.
+Source checkouts are not updated this way. Flatpak installations use `flatpak update`.
+Checksums validate integrity against the project's release; they are not independent
+package signatures. Failed installation or restart is reported and is not an automatic
+rollback; use the package manager's diagnostics to recover an interrupted transaction.

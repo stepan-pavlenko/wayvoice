@@ -15,6 +15,7 @@ from .controllers.integration import IntegrationController
 from .controllers.settings import SettingsController
 from .controllers.shortcut import ShortcutController
 from .controllers.status import StatusController
+from .dialogs.update import show_update
 from .dialogs.about import show_about
 from .dialogs.help import show_help
 from .widgets.labels import clip_subtitle
@@ -41,7 +42,7 @@ class WayVoiceWindow(Adw.ApplicationWindow):
         self.home = HomePage(ctx)
         self.settings = SettingsPage(ctx)
         self._install_css()
-        for name, callback in (('indicator', self._show_indicator), ('help', self._show_help), ('about', self._show_about), ('diagnostics', ctx.status._copy_diagnostics), ('quit', self._quit)):
+        for name, callback in (('update', lambda *_: show_update(self)), ('indicator', self._show_indicator), ('help', self._show_help), ('about', self._show_about), ('diagnostics', ctx.status._copy_diagnostics), ('quit', self._quit)):
             action = Gio.SimpleAction.new(name, None)
             action.connect('activate', callback)
             self.add_action(action)
@@ -56,7 +57,7 @@ class WayVoiceWindow(Adw.ApplicationWindow):
         header.set_title_widget(switcher)
         menu_button = Gtk.MenuButton(icon_name='open-menu-symbolic', tooltip_text=self.t('nav.settings'))
         menu = Gio.Menu()
-        for label, action in (('indicator.open', 'indicator'), ('menu.help', 'help'), ('menu.diagnostics', 'diagnostics'), ('menu.about', 'about'), ('menu.close_settings', 'quit')):
+        for label, action in (('menu.update', 'update'), ('indicator.open', 'indicator'), ('menu.help', 'help'), ('menu.diagnostics', 'diagnostics'), ('menu.about', 'about'), ('menu.close_settings', 'quit')):
             menu.append(self.t(label), f'win.{action}')
         menu_button.set_menu_model(menu)
         header.pack_end(menu_button)

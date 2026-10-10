@@ -462,7 +462,10 @@ class WayVoiceDaemon:
                 self._remove_finished_wav(wav)
 
     def start_recording(self, delivery_mode=None) -> dict:
+        from .updater import updating
         with self._lock:
+            if updating():
+                return {"ok": False, "error": "WayVoice is updating. Try again afterwards."}
             self._retry_asr_cleanup()
             failure = self._reconcile_recorder()
             if failure:
@@ -740,6 +743,16 @@ class WayVoiceDaemon:
 
 
     def dispatch(self, command: str) -> dict:
+        from .updater import updating
+        if command.strip().lower() == 'update-ready':
+            with self._lock:
+                if not updating():
+                    return {"ok": False, "error": "Update lock is not held."}
+                if self.recorder.recording or self.busy or self._prepare_running or self._model_maintenance:
+                    return {"ok": False, "error": "Finish dictation and model preparation before updating."}
+                return {"ok": True}
+        if command.strip().lower().partition(' ')[0] in {'prepare-model', 'delete-model', 'engine-setup'} and updating():
+            return {"ok": False, "error": "WayVoice is updating. Try again afterwards."}
         if self._shutdown.is_set() and command.strip().lower() not in {"ping", "status", "quit"}:
             return {"ok": False, "state": "shutting_down", "error": "Daemon is shutting down."}
         raw = command.strip()

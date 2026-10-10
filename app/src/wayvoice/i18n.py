@@ -11,6 +11,7 @@ SUPPORTED_UI_LANGUAGES = ("auto", "ru", "en")
 _RU = {
     "nav.home": "Главная",
     "nav.settings": "Настройки",
+    "menu.update": "Проверить обновления…",
     "menu.about": "О программе",
     "menu.diagnostics": "Скопировать диагностику",
     "menu.quit": "Выйти",
@@ -243,6 +244,7 @@ _RU = {
 _EN = {
     "nav.home": "Home",
     "nav.settings": "Settings",
+    "menu.update": "Check for updates…",
     "menu.about": "About WayVoice",
     "menu.diagnostics": "Copy diagnostics",
     "menu.quit": "Quit",
