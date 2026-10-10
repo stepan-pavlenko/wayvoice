@@ -44,6 +44,35 @@ class OnboardingUITests(unittest.TestCase):
         self.assertEqual(self.win.step, 2)
         self.tasks.run.assert_not_called()
 
+    def test_all_ui_languages_render_and_picker_changes_direction(self):
+        from wayvoice.i18n import SUPPORTED_UI_LANGUAGES, tr
+        self.addCleanup(Gtk.Widget.set_default_direction, Gtk.TextDirection.LTR)
+        def find_combo(widget):
+            if isinstance(widget, Adw.ComboRow):
+                return widget
+            child = widget.get_first_child()
+            while child:
+                found = find_combo(child)
+                if found:
+                    return found
+                child = child.get_next_sibling()
+        for code in SUPPORTED_UI_LANGUAGES:
+            self.win.language = code
+            self.win._render()
+            row = find_combo(self.win.body)
+            self.assertEqual(row.get_model().get_n_items(), len(SUPPORTED_UI_LANGUAGES))
+            self.assertEqual(self.win.primary.get_label(), tr('onboard.continue', code))
+        self.win.language = 'en'
+        self.win._render()
+        row = find_combo(self.win.body)
+        row.set_selected(SUPPORTED_UI_LANGUAGES.index('ar'))
+        self.assertEqual(self.win.language, 'ar')
+        self.assertEqual(self.win.get_direction(), Gtk.TextDirection.RTL)
+        row = find_combo(self.win.body)
+        row.set_selected(SUPPORTED_UI_LANGUAGES.index('de'))
+        self.assertEqual(self.win.language, 'de')
+        self.assertEqual(self.win.get_direction(), Gtk.TextDirection.LTR)
+
     def test_explicit_download_single_flight_success_then_explicit_save(self):
         self.win._go(2)
         self.win._start()

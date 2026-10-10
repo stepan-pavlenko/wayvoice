@@ -6,7 +6,8 @@ from gi.repository import Adw, Gtk
 from .. import onboarding
 from ..config import load_config
 from ..engine import TranscriptionCancelled
-from ..i18n import tr
+from ..i18n import SUPPORTED_UI_LANGUAGES, tr, ui_language_labels
+from .localization import set_text_direction
 from ..model_store import human_size
 from ..shortcut import manual_shortcut_required, manual_shortcut_hint, portal_shortcut_desktop
 from .async_tasks import TaskRunner
@@ -21,7 +22,7 @@ class OnboardingWindow(Adw.ApplicationWindow):
         self.finished = finished
         saved = load_config()
         self.language = saved.get('ui_language', 'auto')
-        if self.language not in ('auto', 'ru', 'en'):
+        if self.language not in SUPPORTED_UI_LANGUAGES:
             self.language = 'auto'
         self.model = saved.get('model', 'small') if saved.get('onboarding_completed') is False else 'small'
         if self.model not in onboarding.MODELS:
@@ -54,6 +55,7 @@ class OnboardingWindow(Adw.ApplicationWindow):
         return button
 
     def _render(self):
+        set_text_direction(self, self.language)
         toolbar = Adw.ToolbarView()
         header = Adw.HeaderBar()
         header.set_title_widget(Gtk.Label(label='WayVoice'))
@@ -91,8 +93,8 @@ class OnboardingWindow(Adw.ApplicationWindow):
         self.body.append(self._label(self.t('welcome_detail')))
         group = Adw.PreferencesGroup()
         row = Adw.ComboRow(title=self.t('language'))
-        row.set_model(Gtk.StringList.new([self.t('system'), 'Русский', 'English']))
-        codes = ('auto', 'ru', 'en')
+        row.set_model(Gtk.StringList.new(ui_language_labels(self.language)))
+        codes = SUPPORTED_UI_LANGUAGES
         row.set_selected(codes.index(self.language))
         def changed(*_):
             self.language = codes[row.get_selected()]

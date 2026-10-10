@@ -47,6 +47,21 @@ class OnboardingConfigTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 onboarding.finish_config(language, model)
 
+    def test_all_interface_languages_persist_without_changing_speech_language(self):
+        from wayvoice.i18n import SUPPORTED_UI_LANGUAGES
+        self.write({'language': 'ja'})
+        for language in SUPPORTED_UI_LANGUAGES:
+            with self.subTest(language=language):
+                onboarding.save_selection(language, 'small', completed=True)
+                saved = config.load_config()
+                self.assertEqual(saved['ui_language'], language)
+                # Onboarding deliberately starts recognition in automatic mode.
+                self.assertEqual(saved['language'], 'auto')
+                saved['language'] = 'ja'
+                config.save_config(saved)
+                self.assertEqual(config.load_config()['ui_language'], language)
+                self.assertEqual(config.load_config()['language'], 'ja')
+
 
 class OnboardingPreparationTests(unittest.TestCase):
     cfg = {"engine": "faster-whisper", "model": "small", "engine_worker": True}

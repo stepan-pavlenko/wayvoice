@@ -1,12 +1,19 @@
 from __future__ import annotations
 
+import json
 import locale
+from importlib.resources import files
 import warnings
 from typing import Any
 
 from . import languages
 
-SUPPORTED_UI_LANGUAGES = ("auto", "ru", "en")
+UI_LANGUAGE_NAMES = {
+    "ru": "Русский", "en": "English", "es": "Español", "pt": "Português",
+    "fr": "Français", "de": "Deutsch", "zh": "简体中文", "ja": "日本語",
+    "ar": "العربية", "hi": "हिन्दी",
+}
+SUPPORTED_UI_LANGUAGES = ("auto", *UI_LANGUAGE_NAMES)
 
 _RU = {
     "nav.home": "Главная",
@@ -857,27 +864,96 @@ _EN.update({'onboard.kde_shortcut': 'In WayVoice settings, click Configure in KD
                          'with this window closed.',
  'shortcut.portal.active': 'Assigned in KDE: {binding}'})
 
+_RU.update({'unit.seconds': '{value} с',
+ 'unit.minutes': '{value} мин',
+ 'update.title': 'Обновление WayVoice',
+ 'update.checking': 'Проверка GitHub Releases…',
+ 'update.available': 'Установлена {installed}. Доступна {available}.\n'
+                     'Установка откроется в терминале и потребует подтверждения. Завершите '
+                     'диктовку; службы будут перезапущены. После обновления закройте и откройте '
+                     'настройки.',
+ 'update.install': 'Установить…',
+ 'update.current': 'Установлена актуальная версия: {version}',
+ 'update.launcher_missing': 'Не найден запускатель wayvoice',
+ 'model.subtitle.tiny': 'Самая лёгкая · многоязычная',
+ 'model.subtitle.base': 'Быстрая · многоязычная',
+ 'model.subtitle.small': 'Баланс скорости и точности',
+ 'model.subtitle.medium': 'Точнее, но тяжелее',
+ 'model.subtitle.large-v3': 'Максимальная точность · многоязычная',
+ 'model.subtitle.turbo': 'Большая модель с упором на скорость',
+ 'model.subtitle.tiny.en': 'Английская · очень лёгкая',
+ 'model.subtitle.base.en': 'Английская · быстрая',
+ 'model.subtitle.small.en': 'Английская · хороший баланс',
+ 'model.subtitle.medium.en': 'Английская · высокая точность',
+ 'model.subtitle.distil-large-v3': 'Английская · ускоренная distilled-модель',
+ 'model.subtitle.bzikst/faster-whisper-large-v3-russian-int8': 'Дообучена на русской речи · '
+                                                               'community',
+ 'model.subtitle.tnfru/whisper-large-v3-german-ct2': 'Дообучена на немецкой речи · community',
+ 'model.subtitle.nekusu/faster-whisper-large-v3-turbo-latam-int8-ct2': 'Латиноамериканский '
+                                                                       'испанский · community',
+ 'model.subtitle.ele-sage/whisper-large-v3-turbo-fr-quebecois-ct2': 'Французский Квебека · '
+                                                                    'community',
+ 'model.subtitle.LocalAI-io/whisper-large-v3-it-yodas-only-ct2-int8': 'Дообучена на итальянской '
+                                                                      'речи · community',
+ 'model.subtitle.__custom__': 'Hugging Face repo ID или локальный путь'})
+_EN.update({'unit.seconds': '{value} s',
+ 'unit.minutes': '{value} min',
+ 'update.title': 'WayVoice update',
+ 'update.checking': 'Checking GitHub Releases…',
+ 'update.available': 'Installed: {installed}. Available: {available}.\n'
+                     'Installation opens in a terminal and asks for confirmation. Finish '
+                     'dictation; services will restart. Reopen settings afterwards.',
+ 'update.install': 'Install…',
+ 'update.current': 'Up to date: {version}',
+ 'update.launcher_missing': 'wayvoice launcher unavailable',
+ 'model.subtitle.tiny': 'Lightest · multilingual',
+ 'model.subtitle.base': 'Fast · multilingual',
+ 'model.subtitle.small': 'Balanced speed and accuracy',
+ 'model.subtitle.medium': 'More accurate, heavier',
+ 'model.subtitle.large-v3': 'Highest accuracy · multilingual',
+ 'model.subtitle.turbo': 'Large model optimized for speed',
+ 'model.subtitle.tiny.en': 'English-only · very light',
+ 'model.subtitle.base.en': 'English-only · fast',
+ 'model.subtitle.small.en': 'English-only · balanced',
+ 'model.subtitle.medium.en': 'English-only · high accuracy',
+ 'model.subtitle.distil-large-v3': 'English-only · distilled and faster',
+ 'model.subtitle.bzikst/faster-whisper-large-v3-russian-int8': 'Fine-tuned for Russian · '
+                                                               'community',
+ 'model.subtitle.tnfru/whisper-large-v3-german-ct2': 'Fine-tuned for German · community',
+ 'model.subtitle.nekusu/faster-whisper-large-v3-turbo-latam-int8-ct2': 'Latin American Spanish · '
+                                                                       'community',
+ 'model.subtitle.ele-sage/whisper-large-v3-turbo-fr-quebecois-ct2': 'Québec French · community',
+ 'model.subtitle.LocalAI-io/whisper-large-v3-it-yodas-only-ct2-int8': 'Fine-tuned for Italian · '
+                                                                      'community',
+ 'model.subtitle.__custom__': 'Hugging Face repo ID or local path'})
+
 _TRANSLATIONS = {"ru": _RU, "en": _EN}
+for _code in UI_LANGUAGE_NAMES:
+    if _code not in _TRANSLATIONS:
+        _TRANSLATIONS[_code] = json.loads(
+            files("wayvoice").joinpath("locales", _code + ".json").read_text(encoding="utf-8")
+        )
+
+
+def ui_language_labels(language: str | None = None) -> list[str]:
+    """Keep language names readable even when the current UI language is unfamiliar."""
+    return [tr("ui.auto", language), *UI_LANGUAGE_NAMES.values()]
+
 
 
 def resolve_language(value: str | None) -> str:
-    """Pick the interface language out of the configured value or the locale.
-
-    Only two interface translations exist, so this maps the whole recognition
-    language list of :mod:`wayvoice.languages` onto them: Russian gets the
-    Russian one and everything else falls back to English.  That is a choice
-    about *interface* text, not about what can be dictated - those are
-    independent, and a Ukrainian user can perfectly well want an English UI.
-    """
+    """Resolve an explicit or system UI locale independently of speech language."""
     value = value.strip().lower() if isinstance(value, str) else languages.AUTO
-    if value in _TRANSLATIONS:
-        return value
+    normalized = languages.normalize(value)
+    if normalized in _TRANSLATIONS:
+        return normalized
     candidates: list[str] = [_locale_language(locale.getlocale)]
     if not candidates[0]:
         # Deprecated in 3.11 and gone by 3.15, but on the systems we support it
         # still answers where getlocale() has nothing to say.
         candidates.append(_locale_language(getattr(locale, "getdefaultlocale", None)))
-    return "ru" if languages.detect_from_locale(candidates) == "ru" else "en"
+    detected = languages.detect_from_locale(candidates)
+    return detected if detected in _TRANSLATIONS else "en"
 
 
 def _locale_language(getter) -> str:

@@ -58,4 +58,7 @@ def preset_index(model_id: str) -> int:
 
 
 def preset_subtitle(item: dict[str, Any], ui_language: str) -> str:
-    return str(item.get("subtitle_ru" if ui_language == "ru" else "subtitle_en") or "")
+    from .i18n import tr
+    key = "model.subtitle." + str(item.get("id", ""))
+    value = tr(key, ui_language)
+    return value if value != key else str(item.get("subtitle_en") or "")

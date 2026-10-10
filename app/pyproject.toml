@@ -26,4 +26,4 @@ wayvoice-settings = "wayvoice.ui:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-wayvoice = ["runtime-requirements.txt"]
+wayvoice = ["runtime-requirements.txt", "locales/*.json"]

@@ -6,6 +6,7 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, Gtk
 
+from ...i18n import ui_language_labels
 from ... import languages
 from ...config import number
 from ...engine import DEFAULT_ENGINE
@@ -76,6 +77,7 @@ class SettingsPage:
         engine_group.add(self.model)
 
         self.custom_model = Adw.EntryRow(title=self.ctx.state.t("settings.custom_model"))
+        self.custom_model.set_direction(Gtk.TextDirection.LTR)
         current_model = str(self.ctx.state.cfg.get("model", "small"))
         custom_value = str(self.ctx.state.cfg.get("custom_model", ""))
         if preset_index(current_model) == len(MODEL_PRESETS) - 1 and current_model != "__custom__":
@@ -152,9 +154,11 @@ class SettingsPage:
         engine_group.add(self.worker)
 
         self.cpp_binary = Adw.EntryRow(title=self.ctx.state.t("settings.cpp_binary"))
+        self.cpp_binary.set_direction(Gtk.TextDirection.LTR)
         self.cpp_binary.set_text(str(self.ctx.state.cfg.get("whisper_cpp_binary", "")))
         engine_group.add(self.cpp_binary)
         self.cpp_model = Adw.EntryRow(title=self.ctx.state.t("settings.cpp_model"))
+        self.cpp_model.set_direction(Gtk.TextDirection.LTR)
         self.cpp_model.set_text(str(self.ctx.state.cfg.get("whisper_cpp_model", "")))
         engine_group.add(self.cpp_model)
         self.cpp_gpu = Adw.SwitchRow(title=self.ctx.state.t("settings.cpp_gpu"))
@@ -162,6 +166,7 @@ class SettingsPage:
         engine_group.add(self.cpp_gpu)
 
         self.custom_command = Adw.EntryRow(title=self.ctx.state.t("settings.custom_command"))
+        self.custom_command.set_direction(Gtk.TextDirection.LTR)
         self.custom_command.set_text(str(self.ctx.state.cfg.get("custom_command", "")))
         self.custom_command.set_tooltip_text(self.ctx.state.t("settings.custom_command_sub"))
         engine_group.add(self.custom_command)
@@ -251,7 +256,7 @@ class SettingsPage:
         interface_group = Adw.PreferencesGroup(title=self.ctx.state.t("settings.interface"))
         page.add(interface_group)
         self.ui_language = Adw.ComboRow(title=self.ctx.state.t("settings.ui_language"))
-        self.ui_language.set_model(Gtk.StringList.new([self.ctx.state.t("ui.auto"), self.ctx.state.t("ui.russian"), self.ctx.state.t("ui.english")]))
+        self.ui_language.set_model(Gtk.StringList.new(ui_language_labels(self.ctx.state.ui_lang)))
         self.ui_language.set_selected(index_or_zero(UI_LANGUAGE_IDS, self.ctx.state.ui_lang_setting))
         interface_group.add(self.ui_language)
 

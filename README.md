@@ -367,3 +367,12 @@ Source checkouts are not updated this way. Flatpak installations use `flatpak up
 Checksums validate integrity against the project's release; they are not independent
 package signatures. Failed installation or restart is reported and is not an automatic
 rollback; use the package manager's diagnostics to recover an interrupted transaction.
+
+### Interface languages
+
+The interface supports **English, Russian, Spanish, Portuguese, French, German,
+Simplified Chinese, Japanese, Arabic and Hindi**. Choose a language during first-run
+setup or in Settings, then save. **Automatic** follows the system locale and falls
+back to English for unsupported languages. Arabic uses a right-to-left layout;
+commands and file paths remain left-to-right. The interface language and speech
+recognition language are independent. Translations are bundled for offline use.

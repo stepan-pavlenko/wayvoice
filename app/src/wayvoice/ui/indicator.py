@@ -5,6 +5,7 @@ from ..cli import request
 from ..config import load_config
 from ..i18n import tr
 from .async_tasks import TaskRunner
+from .localization import set_text_direction
 from .health_presentation import recovery_text
 from .setup_presentation import model_missing
 from .widgets.labels import make_label
@@ -16,7 +17,8 @@ class IndicatorWindow(Adw.ApplicationWindow):
         self.tasks = TaskRunner()
         self._poll_running = False
         self._menu_unavailable = False
-        self.language = None
+        self.language = load_config().get('ui_language', 'auto')
+        set_text_direction(self, self.language)
         self.set_title(self.t('indicator.title'))
         self.set_size_request(280, 64)
         self.set_default_size(340, 84)
@@ -143,6 +145,7 @@ class IndicatorWindow(Adw.ApplicationWindow):
         self._poll_running = False
         reply, cfg = snapshot
         self.language = cfg.get('ui_language', self.language or 'auto')
+        set_text_direction(self, self.language)
         self.set_title(self.t('indicator.title'))
         for button, key in ((self.settings_button, 'indicator.open_app'),
                             (self.window_actions_button, 'indicator.window_actions'),

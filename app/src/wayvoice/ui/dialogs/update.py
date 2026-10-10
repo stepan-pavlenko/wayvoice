@@ -9,12 +9,12 @@ from ...updater import check
 
 
 def show_update(window):
-    ru = window.state.ui_lang == 'ru'
+    t = window.state.t
     dialog = Adw.MessageDialog(
         transient_for=window, modal=True,
-        heading='Обновление WayVoice' if ru else 'WayVoice update',
-        body='Проверка GitHub Releases…' if ru else 'Checking GitHub Releases…')
-    dialog.add_response('close', 'Закрыть' if ru else 'Close')
+        heading=t('update.title'),
+        body=t('update.checking'))
+    dialog.add_response('close', t('common.close'))
     dialog.set_close_response('close')
     alive = [True]
 
@@ -24,14 +24,14 @@ def show_update(window):
             launcher = shutil.which('wayvoice')
             try:
                 if not launcher:
-                    raise RuntimeError('wayvoice launcher unavailable')
+                    raise RuntimeError(t('update.launcher_missing'))
                 app = Gio.AppInfo.create_from_commandline(
                     shlex.join([launcher, 'update', '--interactive']), 'WayVoice update',
                     Gio.AppInfoCreateFlags.NEEDS_TERMINAL)
                 app.launch([], None)
             except Exception as exc:
                 error = Adw.MessageDialog(transient_for=window, modal=True,
-                        heading='WayVoice update', body=str(exc) + '\nwayvoice update --install')
+                        heading=t('update.title'), body=str(exc) + '\nwayvoice update --install')
                 error.add_response('close', 'OK')
                 error.present()
 
@@ -43,18 +43,11 @@ def show_update(window):
         if not alive[0]:
             return
         if result['available']:
-            dialog.set_body((f"Установлена {__version__}. Доступна {result['version']}.\n"
-                             'Установка откроется в терминале и потребует подтверждения. '
-                             'Завершите диктовку; службы будут перезапущены. '
-                             'После обновления закройте и откройте настройки.' if ru else
-                             f"Installed: {__version__}. Available: {result['version']}.\n"
-                             'Installation opens in a terminal and asks for confirmation. '
-                             'Finish dictation; services will restart. Reopen settings afterwards.'))
-            dialog.add_response('install', 'Установить…' if ru else 'Install…')
+            dialog.set_body(t('update.available', installed=__version__, available=result['version']))
+            dialog.add_response('install', t('update.install'))
             dialog.set_response_appearance('install', Adw.ResponseAppearance.SUGGESTED)
         else:
-            dialog.set_body('Установлена актуальная версия: ' + __version__ if ru else
-                            'Up to date: ' + __version__)
+            dialog.set_body(t('update.current', version=__version__))
 
     dialog.connect('response', response)
     dialog.present()

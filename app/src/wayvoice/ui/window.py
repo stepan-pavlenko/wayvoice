@@ -5,6 +5,7 @@ gi.require_version('Adw', '1')
 from gi.repository import Adw, Gdk, Gio, Gtk
 from ..config import load_config
 from .async_tasks import TaskRunner
+from .localization import set_text_direction
 from .state import UiContext, UiState
 from .style import CSS
 from .pages.home import HomePage
@@ -28,6 +29,7 @@ class WayVoiceWindow(Adw.ApplicationWindow):
         self.set_default_size(780, 760)
         self.set_size_request(420, 360)
         self.state = UiState(load_config())
+        set_text_direction(self, self.state.ui_lang)
         self.tasks = TaskRunner()
         self._close_pending = False
         self._quit_pending = False
