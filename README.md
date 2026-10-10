@@ -107,6 +107,20 @@ stops its monitoring, not the background daemon. Status updates never raise the 
 or request activation. It is a normal window: placement, focus on explicit opening,
 occlusion and any always-on-top option are controlled by your desktop.
 
+## KDE Plasma
+
+On Plasma, assign the command shown beside the shortcut in WayVoice Settings in
+**System Settings → Keyboard → Shortcuts → Add New → Command or Script**.
+The saved key in WayVoice is the desired binding; Plasma owns the active shortcut.
+Manual registration is expected and does not make saving other settings fail.
+
+Use **Ctrl+V** for ordinary editors and **Ctrl+Shift+V** for Konsole. If automatic
+paste is unavailable, the recognized text remains in the clipboard for manual paste.
+The helper needs access to `/dev/uinput`; diagnostics distinguish clipboard delivery
+from automatic paste. GlobalShortcuts portal registration is not implemented yet.
+Plasma 6.3.6 Wayland service/environment checks have passed; this is not a completed
+installed dictation and paste acceptance test.
+
 ## How it works
 
 1. Open WayVoice and use Home preparation guidance to prepare the recognition runtime and explicitly download a model.
