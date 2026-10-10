@@ -36,7 +36,7 @@ FAKE_LOG_ENV = "WAYVOICE_FAKE_LOG"
 RESTARTED_UNITS = "wayvoice.service wayvoice-ydotool.service"
 
 
-def run_postinst(action: str, bin_dir: Path, log: Path) -> subprocess.CompletedProcess:
+def run_postinst(action: str, bin_dir: Path, log: Path, script: Path = POSTINST) -> subprocess.CompletedProcess:
     """Run packaging/DEBIAN/postinst in a sandbox where every system tool is a fake.
 
     The PATH contains only the fakes, so the script cannot reach the real systemctl,
@@ -53,7 +53,7 @@ def run_postinst(action: str, bin_dir: Path, log: Path) -> subprocess.CompletedP
     }
     try:
         return subprocess.run(
-            [sh, str(POSTINST), action],
+            [sh, str(script), action],
             env=env,
             capture_output=True,
             text=True,
@@ -160,6 +160,29 @@ class PostinstRestartTests(unittest.TestCase):
             self.calls(),
             "the restart must still be attempted when the helper may fail",
         )
+
+
+    def test_removal_stops_user_units_before_disabling(self):
+        self.write_recorder("systemctl")
+        self.write_recorder("deb-systemd-invoke")
+        script = POSTINST.with_name("prerm")
+        for action in ("remove", "deconfigure", "upgrade", "failed-upgrade"):
+            self.log.write_text("")
+            result = run_postinst(action, self.bin_dir, self.log, script)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            calls = self.calls()
+            if action in ("remove", "deconfigure"):
+                self.assertEqual(calls[0], "deb-systemd-invoke --user stop wayvoice.service wayvoice-engine-setup.service wayvoice-setup.service wayvoice-ydotool.service")
+                self.assertIn("systemctl --global disable", calls[1])
+            else:
+                self.assertEqual(calls, [])
+
+    def test_postrm_reloads_user_managers_and_tolerates_helper_failure(self):
+        self.write_recorder("systemctl")
+        self.write_fake("deb-systemd-invoke", "#!/bin/sh\nprintf '%s\\n' \"${0##*/} $*\" >> \"$WAYVOICE_FAKE_LOG\"\nexit 1\n")
+        result = run_postinst("remove", self.bin_dir, self.log, POSTINST.with_name("postrm"))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("deb-systemd-invoke --user daemon-reload", self.calls())
 
 
 if __name__ == "__main__":
