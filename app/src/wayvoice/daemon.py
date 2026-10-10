@@ -18,7 +18,7 @@ from typing import Any
 
 from . import __version__
 from .audio import AudioRecorder
-from .config import DEFAULTS as _CONFIG_DEFAULTS, config_error, load_config, number
+from .config import DEFAULTS as _CONFIG_DEFAULTS, config_error, config_path, load_config, number
 from .engine import (
     DEFAULT_ENGINE,
     TranscriptionCancelled,
@@ -166,6 +166,13 @@ class WayVoiceDaemon:
         _sweep_stale_recordings()
         cfg = load_config()
         engine = engine_from_config(cfg)
+        setup_pending = (not config_path().exists() or
+                         cfg.get("onboarding_completed") is False or
+                         cfg.get("onboarding_deferred"))
+        if setup_pending and engine_status(cfg).get("state") != "ready":
+            # Before first-run consent (or after Later), daemon start must not
+            # install a runtime in the background.
+            return
         if engine is not None and engine.needs_setup:
             self._prepare_engine(engine, engine_status(cfg))
         # Warm the worker with the model that is already on disk, so the first
@@ -464,7 +471,10 @@ class WayVoiceDaemon:
             est = engine_status(cfg)
             if est.get("state") != "ready":
                 engine = engine_from_config(cfg)
-                if engine is not None and engine.needs_setup:
+                setup_pending = (not config_path().exists() or
+                                 cfg.get("onboarding_completed") is False or
+                                 cfg.get("onboarding_deferred"))
+                if engine is not None and engine.needs_setup and not setup_pending:
                     self._prepare_engine(engine, est)
                 return {"ok": False, "error": est.get("message", "Recognition engine is not ready.")}
             model = self._model_report(cfg)
