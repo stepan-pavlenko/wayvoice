@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.6.11 — 2026-10-11
 
 - Run native package updates inside the app, with progress, retry, service verification and automatic interface restart. Flatpak and source installations show their own update route.
 - Compact the Status card and add shortcuts for copying the last dictation and opening Settings.
