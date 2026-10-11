@@ -8,7 +8,7 @@ lint: version-check
 	set -e; for f in \
 	  scripts/wayvoice scripts/wayvoice-daemon scripts/wayvoice-settings \
 	  scripts/wayvoice-engine-setup scripts/wayvoice-ydotoold scripts/setup-user \
-	  scripts/build-deb.sh scripts/build-rpm.sh scripts/build-ydotool.sh \
+	  scripts/build-deb.sh scripts/build-rpm.sh scripts/build-rpm-container.sh scripts/build-ydotool.sh \
 	  packaging/DEBIAN/postinst packaging/DEBIAN/postrm packaging/DEBIAN/prerm; do \
 	    if [ -f "$$f" ]; then bash -n "$$f"; else echo "skip (absent): $$f"; fi; \
 	  done
