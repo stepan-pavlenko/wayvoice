@@ -6,8 +6,8 @@
     <name translate="no">Stepan Pavlenko</name>
   </developer>
   <update_contact>i@pavlenkosa.ru</update_contact>
-  <summary>Local voice dictation for GNOME and Wayland</summary>
-  <summary xml:lang="ru">Локальный голосовой ввод для GNOME и Wayland</summary>
+  <summary>Local voice input for Linux</summary>
+  <summary xml:lang="ru">Локальный голосовой ввод для Linux</summary>
   <url type="homepage">https://github.com/pavlenkosa/wayvoice</url>
   <url type="bugtracker">https://github.com/pavlenkosa/wayvoice/issues</url>
   <metadata_license>CC0-1.0</metadata_license>
@@ -16,6 +16,20 @@
     <p>WayVoice records microphone audio through PipeWire, transcribes it locally and inserts the result into the focused application.</p>
     <p xml:lang="ru">WayVoice записывает микрофон через PipeWire, локально распознаёт речь и вставляет результат в активное приложение.</p>
   </description>
+  <screenshots>
+    <screenshot type="default">
+      <caption>Dictation status and the latest recognized text</caption>
+      <image>https://raw.githubusercontent.com/pavlenkosa/wayvoice/v0.6.9/data/screenshots/home-en.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Recognition and model settings</caption>
+      <image>https://raw.githubusercontent.com/pavlenkosa/wayvoice/v0.6.9/data/screenshots/settings-en.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>First-run language and model setup</caption>
+      <image>https://raw.githubusercontent.com/pavlenkosa/wayvoice/v0.6.9/data/screenshots/setup-en.png</image>
+    </screenshot>
+  </screenshots>
   <launchable type="desktop-id">io.github.stepan.WayVoice.desktop</launchable>
   <provides><binary>wayvoice-settings</binary></provides>
   <supports><control>pointing</control><control>keyboard</control></supports>
