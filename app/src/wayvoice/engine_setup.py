@@ -96,13 +96,17 @@ def _take_lock(lock) -> bool:
             time.sleep(0.1)
 
 
+def setup_lock_path() -> Path:
+    data_home = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local/share"))
+    return data_home / "wayvoice" / "engine-setup.lock"
+
+
 def main() -> int:
     state_home = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local/state"))
-    data_home = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local/share"))
     log_dir = state_home / "wayvoice"
     log_dir.mkdir(parents=True, exist_ok=True)
     log_path = log_dir / "engine-setup.log"
-    lock_path = data_home / "wayvoice" / "engine-setup.lock"
+    lock_path = setup_lock_path()
     lock_path.parent.mkdir(parents=True, exist_ok=True)
 
     with lock_path.open("w") as lock:
@@ -112,6 +116,10 @@ def main() -> int:
             # keep reporting "installing" after the real attempt has failed.
             print("wayvoice-engine-setup: another setup is running", file=sys.stderr)
             return 0
+        from .updater import updating
+        if updating():
+            print("wayvoice-engine-setup: WayVoice is updating; try again afterwards", file=sys.stderr)
+            return 1
         runtime = faster_runtime()
         stamp = faster_stamp()
         if stamp.exists() and (runtime / "bin/python").exists():

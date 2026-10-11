@@ -53,6 +53,21 @@ def update_lock():
 
 
 @contextmanager
+def runtime_update_lock():
+    # Update lock is acquired first. Setup owns this same lock before checking
+    # the update lock, so neither existing nor newly requested pip work can race.
+    from .engine_setup import setup_lock_path
+    path = setup_lock_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open('a') as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise ValueError('Finish engine runtime preparation before updating')
+        yield
+
+
+@contextmanager
 def installation_signals():
     # Terminal closure/Ctrl+C must not release the lock while apt/dnf still works.
     watched = (signal.SIGHUP, signal.SIGINT, signal.SIGTERM)
@@ -188,7 +203,7 @@ def install() -> None:
         print(f"Install WayVoice {result['version']}? Services will restart. [y/N]", flush=True)
         if input().strip().lower() not in {'y', 'yes'}:
             return
-        with installation_signals(), update_lock():
+        with installation_signals(), update_lock(), runtime_update_lock():
             # The new daemon checks this same lock before starting recording/model work.
             # A serialized readiness command waits for any already-starting operation.
             ready = request('update-ready', timeout=10)

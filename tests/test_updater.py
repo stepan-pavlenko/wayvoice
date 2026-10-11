@@ -8,6 +8,48 @@ from wayvoice import updater
 
 
 class UpdateTests(unittest.TestCase):
+    def setUp(self):
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        self.directory = Path(directory.name)
+        for target, name in [('wayvoice.updater.lock_path', 'update.lock'),
+                             ('wayvoice.engine_setup.setup_lock_path', 'setup.lock')]:
+            patcher = patch(target, return_value=self.directory / name)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+    def test_runtime_setup_and_update_are_mutually_exclusive(self):
+        import fcntl
+        from wayvoice import engine_setup
+        with engine_setup.setup_lock_path().open('a') as setup:
+            fcntl.flock(setup, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            with updater.update_lock():
+                with self.assertRaisesRegex(ValueError, 'runtime preparation'):
+                    with updater.runtime_update_lock():
+                        self.fail('Update entered active runtime setup')
+        self.assertFalse(updater.updating())
+        with updater.update_lock(), updater.runtime_update_lock():
+            with engine_setup.setup_lock_path().open('a') as other:
+                with self.assertRaises(BlockingIOError):
+                    fcntl.flock(other, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        with updater.runtime_update_lock():
+            pass  # failure/success paths release ownership
+
+    def test_setup_and_daemon_start_do_not_prepare_during_update(self):
+        from wayvoice import engine_setup
+        from wayvoice.daemon import WayVoiceDaemon
+        import os
+        with patch.dict(os.environ, {'XDG_STATE_HOME': str(self.directory)}), \
+             patch.object(engine_setup, '_install_once') as install, \
+             patch.object(engine_setup, 'faster_runtime') as runtime, \
+             patch('wayvoice.daemon.load_config') as config, \
+             updater.update_lock():
+            self.assertEqual(engine_setup.main(), 1)
+            runtime.assert_not_called()
+            install.assert_not_called()
+            WayVoiceDaemon.prepare_on_start(object.__new__(WayVoiceDaemon))
+            config.assert_not_called()
+
     def release(self, name='wayvoice_0.6.9_amd64.deb'):
         release = {'tag_name': 'v0.6.9', 'assets': []}
         for item in (name, 'SHA256SUMS'):

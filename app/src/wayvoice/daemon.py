@@ -166,6 +166,11 @@ class WayVoiceDaemon:
         before starting its own, leaving the pid file owned by a process about to exit.
         """
         _sweep_stale_recordings()
+        from .updater import updating
+        if updating():
+            # A freshly installed daemon may start from package hooks while the
+            # updater still owns the runtime. Preparation resumes on demand.
+            return
         cfg = load_config()
         engine = engine_from_config(cfg)
         setup_pending = (not config_path().exists() or
