@@ -47,6 +47,8 @@ def controller_context():
     ctx.shortcut = ShortcutController(ctx)
     window.context = ctx
     window.tasks = ctx.tasks
+    window._update_busy = False
+    window._update_dialog = None
     window._close_pending = False
     window._quit_pending = False
     return ctx

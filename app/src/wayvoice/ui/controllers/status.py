@@ -152,6 +152,8 @@ class StatusController:
         self._maybe_restart({'ok': False})
 
     def _maybe_restart(self, reply):
+        if getattr(self.ctx.window, "_update_busy", False):
+            return False
         self._restart_confirmed = bool(reply.get("ok")) and str(reply.get("version") or "") == __version__
         if reply.get("ok"):
             if self._restart_confirmed:
@@ -247,7 +249,9 @@ class StatusController:
         error = str(reply.get("last_error") or self._action_error or "")
         warning = str(reply.get("last_warning") or "")
         text = str(reply.get("last_text") or "")
-        shortcut = str(reply.get("shortcut") or label_for(str(cfg.get("shortcut", "F8"))))
+        shortcut = str(reply.get("shortcut") or label_for(str(cfg.get("shortcut", "F8")), self.ctx.state.ui_lang))
+        if not cfg.get("shortcut") and reply.get("shortcut_portal") is None:
+            shortcut = self.ctx.state.t("shortcut.disabled")
         self.ctx.home.hotkey_label.set_text(shortcut)
         if reply.get('shortcut_portal') is not None or portal_shortcut_desktop():
             portal = reply.get('shortcut_portal') or {}
@@ -380,7 +384,7 @@ class StatusController:
             f"Recognition language: {self._language_label(cfg.get('language'))}",
             f"Timeout: {cfg.get('transcription_timeout_sec')}s",
             f"Max recording: {cfg.get('max_recording_sec')}s",
-            f"Shortcut: {label_for(str(cfg.get('shortcut', '')))}",
+            f"Shortcut: {label_for(str(cfg.get('shortcut', '')), self.ctx.state.ui_lang)}",
         ]
         if isinstance(status, dict) and status.get("config_error"):
             # The daemon is running on defaults because this file could not be read. That

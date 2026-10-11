@@ -21,6 +21,9 @@ def recovery_text(t, detail, category=None):
 
 def paint_health(ctx, detail='', category=None, warning=False):
     home = ctx.home
+    home.health_detail.set_visible(bool(detail or category))
+    if hasattr(home, 'health_actions'):
+        home.health_actions.set_visible(category == 'daemon')
     if detail or category:
         reason, hint = recovery_text(ctx.state.t, detail, category)
         home.health_summary.set_text(ctx.state.t('health.warning' if warning else 'health.attention'))

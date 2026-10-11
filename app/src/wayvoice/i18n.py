@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import locale
+import os
 from importlib.resources import files
 import warnings
 from typing import Any
@@ -928,6 +929,46 @@ _EN.update({'unit.seconds': '{value} s',
  'model.subtitle.__custom__': 'Hugging Face repo ID or local path'})
 
 _TRANSLATIONS = {"ru": _RU, "en": _EN}
+
+_RU.update({'update.external': 'Обновите эту установку через пакетный менеджер или Flatpak. Обновление в '
+                    'приложении доступно для установленного DEB или RPM WayVoice.',
+ 'update.busy': 'Дождитесь завершения текущей операции.',
+ 'update.interrupted': 'Процесс обновления завершился без подтверждения результата.',
+ 'update.restart_failed': 'Пакет установлен, но перезапуск служб не удался.',
+ 'update.stage.check': 'Проверка обновлений…',
+ 'update.stage.download': 'Загрузка обновления…',
+ 'update.stage.verify': 'Проверка пакета…',
+ 'update.stage.authorize': 'Ожидание прав администратора и установка…',
+ 'update.stage.install': 'Установка обновления…',
+ 'update.stage.restart': 'Перезапуск служб…',
+ 'update.stage.reopen': 'Перезапуск WayVoice…',
+ 'update.available': 'Установлена {installed}. Доступна {available}.\n'
+                     'После установки WayVoice и службы перезапустятся. Завершите диктовку и '
+                     'сохраните настройки.'})
+_EN.update({'update.external': 'Update this installation through your package manager or Flatpak. In-app '
+                    'installation requires an installed WayVoice DEB or RPM.',
+ 'update.busy': 'Please wait for the current operation to finish.',
+ 'update.interrupted': 'The updater ended without confirming completion.',
+ 'update.restart_failed': 'The package was installed, but service restart failed.',
+ 'update.stage.check': 'Checking for updates…',
+ 'update.stage.download': 'Downloading the update…',
+ 'update.stage.verify': 'Verifying the package…',
+ 'update.stage.authorize': 'Waiting for administrator authorization and installing…',
+ 'update.stage.install': 'Installing the update…',
+ 'update.stage.restart': 'Restarting services…',
+ 'update.stage.reopen': 'Restarting WayVoice…',
+ 'update.available': 'Installed: {installed}. Available: {available}.\n'
+                     'WayVoice and its services will restart after installation. Finish dictation '
+                     'and save your settings first.'})
+
+
+_RU.update({'daemon.text_copied': 'Текст скопирован в буфер обмена',
+ 'update.failed': 'Не удалось завершить обновление. Посмотрите подробности или повторите попытку.',
+ 'update.retry': 'Повторить'})
+_EN.update({'daemon.text_copied': 'Text copied to clipboard',
+ 'update.failed': 'The update could not be completed. See technical details or try again.',
+ 'update.retry': 'Try again'})
+
 for _code in UI_LANGUAGE_NAMES:
     if _code not in _TRANSLATIONS:
         _TRANSLATIONS[_code] = json.loads(
@@ -947,13 +988,17 @@ def resolve_language(value: str | None) -> str:
     normalized = languages.normalize(value)
     if normalized in _TRANSLATIONS:
         return normalized
-    candidates: list[str] = [_locale_language(locale.getlocale)]
-    if not candidates[0]:
-        # Deprecated in 3.11 and gone by 3.15, but on the systems we support it
-        # still answers where getlocale() has nothing to say.
-        candidates.append(_locale_language(getattr(locale, "getdefaultlocale", None)))
-    detected = languages.detect_from_locale(candidates)
-    return detected if detected in _TRANSLATIONS else "en"
+    message_locale = (os.environ.get('LC_ALL') or os.environ.get('LC_MESSAGES')
+                      or os.environ.get('LANG') or '')
+    if message_locale.split('.', 1)[0].upper() in {'C', 'POSIX'}:
+        return 'en'
+    candidates = os.environ.get('LANGUAGE', '').split(':') + [message_locale]
+    candidates.append(_locale_language(lambda: locale.getlocale(locale.LC_MESSAGES)))
+    for candidate in candidates:
+        detected = languages.detect_from_locale([candidate])
+        if detected in _TRANSLATIONS:
+            return detected
+    return 'en'
 
 
 def _locale_language(getter) -> str:

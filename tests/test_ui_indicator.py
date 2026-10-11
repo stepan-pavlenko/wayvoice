@@ -150,6 +150,7 @@ class IndicatorTests(unittest.TestCase):
             constructor.return_value.present.assert_called_once()
         self.assertIn(self.window, self.app.get_windows())
         fake = mock.Mock()
+        fake._update_busy = False
         fake.context.preferences._mutations = []
         fake._confirm_exit.return_value = False
         WayVoiceWindow._quit(fake)

@@ -80,7 +80,7 @@ class ShortcutController:
         binding = Gtk.accelerator_name(keyval, mods)
         if binding:
             self.ctx.state.shortcut_binding = binding
-            shown = label_for(binding)
+            shown = label_for(binding, self.ctx.state.ui_lang)
             self.ctx.settings.shortcut_row.set_subtitle(shown)
             win.close()
         return True

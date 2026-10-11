@@ -1,5 +1,7 @@
 """GTK application entry point."""
 import sys
+import os
+import shutil
 from gi.repository import Adw, Gio, GLib
 from .window import WayVoiceWindow
 from .indicator import IndicatorWindow
@@ -12,6 +14,9 @@ class App(Adw.Application):
         super().__init__(application_id='io.github.stepan.WayVoice', flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE)
         self.add_main_option('indicator', 0, GLib.OptionFlags.NONE, GLib.OptionArg.NONE,
                              'Open the compact status indicator', None)
+
+        self.add_main_option('restore-indicator', 0, GLib.OptionFlags.NONE, GLib.OptionArg.NONE,
+                             'Restore the indicator after updating', None)
 
     def do_activate(self):
         win = next((w for w in self.get_windows() if isinstance(w, (WayVoiceWindow, OnboardingWindow))), None)
@@ -30,6 +35,8 @@ class App(Adw.Application):
             self.open_indicator()
         else:
             self.activate()
+            if command_line.get_options_dict().contains("restore-indicator"):
+                self.open_indicator()
         return 0
 
     def open_indicator(self):
@@ -50,6 +57,18 @@ class App(Adw.Application):
             if isinstance(window, (WayVoiceWindow, IndicatorWindow, OnboardingWindow)):
                 window._dispose_ui()
         Adw.Application.do_shutdown(self)
+
+
+def restart_installed_ui(window):
+    launcher = shutil.which('wayvoice-settings')
+    if not launcher:
+        raise FileNotFoundError(window.state.t('update.launcher_missing'))
+    args = [launcher]
+    if any(isinstance(w, IndicatorWindow) for w in window.get_application().get_windows()):
+        args.append('--restore-indicator')
+    # exec replaces old imported modules and releases the application's D-Bus
+    # name before the fresh GTK process registers it. A failed exec keeps the UI.
+    os.execv(launcher, args)
 
 
 def main():

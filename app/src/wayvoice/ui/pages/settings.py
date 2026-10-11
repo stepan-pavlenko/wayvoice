@@ -211,7 +211,7 @@ class SettingsPage:
 
         control_group = Adw.PreferencesGroup(title=self.ctx.state.t("settings.control"))
         page.add(control_group)
-        self.shortcut_row = Adw.ActionRow(title=self.ctx.state.t("settings.shortcut"), subtitle=label_for(self.ctx.state.shortcut_binding))
+        self.shortcut_row = Adw.ActionRow(title=self.ctx.state.t("settings.shortcut"), subtitle=label_for(self.ctx.state.shortcut_binding, self.ctx.state.ui_lang))
         shortcut_btn = Gtk.Button(label=self.ctx.state.t("settings.change"), valign=Gtk.Align.CENTER)
         self.shortcut_button = shortcut_btn
         if portal_shortcut_desktop():

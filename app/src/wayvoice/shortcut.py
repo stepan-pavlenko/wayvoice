@@ -15,10 +15,10 @@ KEY = f"{BASE}/wayvoice/"
 
 
 
-def label_for(binding: str) -> str:
+def label_for(binding: str, language: str | None = None) -> str:
     binding = (binding or "").strip()
     if not binding:
-        return "Отключено"
+        return tr("shortcut.disabled", language)
     if binding.upper().startswith("F") and binding[1:].isdigit():
         return binding.upper()
     label = binding

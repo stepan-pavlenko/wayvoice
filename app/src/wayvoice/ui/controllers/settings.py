@@ -205,7 +205,7 @@ class SettingsController:
             self._restart_command = True
             return
         if cfg.get("shortcut_backend") != "portal":
-            self.ctx.home.hotkey_label.set_text(label_for(str(cfg["shortcut"])))
+            self.ctx.home.hotkey_label.set_text(label_for(str(cfg["shortcut"]), self.ctx.state.ui_lang))
         self.ctx.status._update_cards()
         self.ctx.window.toast.add_toast(Adw.Toast(title=self.ctx.state.t("settings.language_pending" if language_changed else "settings.saved") if ok else self.ctx.state.t("settings.saved_warning")))
         self.ctx.models._refresh_model_state()

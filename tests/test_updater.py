@@ -121,6 +121,60 @@ class UpdateTests(unittest.TestCase):
                 self.assertFalse(updater.updating())
 
 
+    def test_gui_install_is_noninteractive_and_confirms_restart_before_done(self):
+        import io
+        import json
+        from contextlib import redirect_stdout
+        release = self.release()
+        data = b'package'
+        sums = (hashlib.sha256(data).hexdigest() + '  wayvoice_0.6.9_amd64.deb\n').encode()
+        output = io.StringIO()
+        with patch.object(updater, 'package_system', return_value=('deb', 'amd64')), \
+             patch.object(updater, 'check', return_value={'available': True, 'version': '0.6.9', 'release': release}), \
+             patch.object(updater, '_read', side_effect=[sums, data]), \
+             patch.object(updater, 'validate_package'), \
+             patch.object(updater.shutil, 'which', side_effect=lambda name: '/usr/bin/' + name), \
+             patch.object(updater.os, 'geteuid', return_value=1000), \
+             patch('builtins.input', side_effect=AssertionError('GUI must not read stdin')), \
+             patch('wayvoice.cli.request', return_value={'ok': True}), \
+             patch.object(updater.subprocess, 'run') as run, redirect_stdout(output):
+            updater.command(['--gui-install'])
+        events = [json.loads(line) for line in output.getvalue().splitlines()]
+        self.assertEqual([item['stage'] for item in events],
+                         ['check', 'download', 'verify', 'authorize', 'restart', 'done'])
+        self.assertTrue(events[-1]['installed'])
+        self.assertTrue(events[-1]['updated'])
+        self.assertEqual(run.call_args_list[1].args[0], ['/usr/bin/wayvoice', 'update', '--restart', '0.6.9'])
+        for call in run.call_args_list:
+            self.assertIs(call.kwargs['stdout'], call.kwargs['stderr'])
+            self.assertNotIn('timeout', call.kwargs)
+        self.assertFalse(updater.updating())
+
+    def test_gui_restart_failure_reports_installed_and_bounded_log(self):
+        import io
+        import json
+        from contextlib import redirect_stdout
+        output = io.StringIO()
+
+        def failed_install(*, confirm, event):
+            self.assertFalse(confirm)
+            event(stage='restart', installed=True)
+            def failed_process(args, **kwargs):
+                kwargs['stderr'].write(b'x' * 10000 + b' daemon failed')
+                raise updater.subprocess.CalledProcessError(1, args)
+            with patch.object(updater.subprocess, 'run', side_effect=failed_process):
+                updater._install_process(['wayvoice', 'update', '--restart', '0.6.9'], str(self.directory), event)
+
+        with patch.object(updater, 'install', side_effect=failed_install), redirect_stdout(output):
+            with self.assertRaises(SystemExit) as failure:
+                updater.command(['--gui-install'])
+        self.assertEqual(failure.exception.code, 1)
+        events = [json.loads(line) for line in output.getvalue().splitlines()]
+        self.assertEqual([item['stage'] for item in events], ['restart', 'error'])
+        self.assertTrue(events[-1]['installed'])
+        self.assertTrue(events[-1]['message'].endswith('daemon failed'))
+        self.assertLess(len(events[-1]['message']), 4500)
+
     def test_update_lock_blocks_daemon_start_and_releases(self):
         from wayvoice.daemon import WayVoiceDaemon
         with tempfile.TemporaryDirectory() as directory, \
@@ -179,3 +233,30 @@ class UpdateTests(unittest.TestCase):
                         child.wait()
             self.assertFalse(updater.updating())
             self.assertEqual(signal.getsignal(signal.SIGINT), original)
+
+    def test_gui_restart_restores_absent_daemon_without_reinstalling(self):
+        import contextlib, io, json
+        output = io.StringIO()
+        with patch('wayvoice.cli.request', side_effect=[{'ok': False}, {'ok': True}]), \
+             patch('wayvoice.service.start_daemon', return_value=True) as start, \
+             patch.object(updater, '_install_process') as run, \
+             patch.object(updater, 'install') as install, \
+             patch.object(updater.shutil, 'which', return_value='/prefix/bin/wayvoice'), \
+             contextlib.redirect_stdout(output):
+            updater.gui_install('0.6.10')
+        start.assert_called_once_with(wait=15)
+        install.assert_not_called()
+        self.assertEqual(run.call_args.args[0], ['/prefix/bin/wayvoice', 'update', '--restart', '0.6.10'])
+        self.assertEqual(json.loads(output.getvalue().splitlines()[-1])['stage'], 'done')
+        self.assertFalse(updater.updating())
+
+    def test_gui_restart_does_not_restart_busy_daemon(self):
+        import contextlib, io, json
+        output = io.StringIO()
+        with patch('wayvoice.cli.request', side_effect=[{'ok': True}, {'ok': False, 'error': 'busy'}]), \
+             patch.object(updater, '_install_process') as run, \
+             contextlib.redirect_stdout(output), self.assertRaises(SystemExit):
+            updater.gui_install('0.6.10')
+        run.assert_not_called()
+        self.assertEqual(json.loads(output.getvalue().splitlines()[-1])['stage'], 'error')
+        self.assertFalse(updater.updating())

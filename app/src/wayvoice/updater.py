@@ -172,13 +172,17 @@ def validate_package(path: Path, kind: str, arch: str, number: str) -> None:
         raise ValueError('Package identity, version or architecture does not match release')
 
 
-def install() -> None:
+def install(*, confirm: bool = True, event=None) -> None:
     # CLI owns the package-manager child; no timeout or window-owned worker may kill it.
     from .cli import request
+    notify = event or (lambda **fields: None)
+    notify(stage='check')
     kind, arch = package_system()
     result = check()
     if not result['available']:
-        print('WayVoice is up to date (' + __version__ + ').')
+        if confirm:
+            print('WayVoice is up to date (' + __version__ + ').')
+        notify(stage='done', version=__version__, updated=False)
         return
     release = result['release']
     asset = select_asset(release, kind, arch)
@@ -196,26 +200,90 @@ def install() -> None:
         raise ValueError('System package manager or pkexec is unavailable')
     with tempfile.TemporaryDirectory(prefix='wayvoice-update-') as directory:
         path = Path(directory) / asset['name']
+        notify(stage='download', version=result['version'])
         path.write_bytes(_read(asset_url(release, asset), MAX_PACKAGE))
+        notify(stage='verify')
         if hashlib.sha256(path.read_bytes()).hexdigest() != hashes[0].lower():
             raise ValueError('Package SHA-256 mismatch')
         validate_package(path, kind, arch, result['version'])
-        print(f"Install WayVoice {result['version']}? Services will restart. [y/N]", flush=True)
-        if input().strip().lower() not in {'y', 'yes'}:
-            return
+        if confirm:
+            print(f"Install WayVoice {result['version']}? Services will restart. [y/N]", flush=True)
+            if input().strip().lower() not in {'y', 'yes'}:
+                return
         with installation_signals(), update_lock(), runtime_update_lock():
             # The new daemon checks this same lock before starting recording/model work.
             # A serialized readiness command waits for any already-starting operation.
             ready = request('update-ready', timeout=10)
             if not ready.get('ok'):
                 raise ValueError('Daemon is busy, unavailable or too old for safe self-update: ' + str(ready.get('error', '')))
-            subprocess.run(privilege + [manager, 'install', '-y', str(path)], check=True)
+            notify(stage='authorize' if privilege else 'install')
+            _install_process(privilege + [manager, 'install', '-y', str(path)], directory, event)
+            notify(stage='restart', installed=True)
             # Execute fresh installed code, never modules imported before upgrade.
             wrapper = shutil.which('wayvoice')
             if not wrapper:
                 raise ValueError('Package installed, but wayvoice launcher is unavailable')
-            subprocess.run([wrapper, 'update', '--restart', result['version']], check=True)
-    print('Update complete. Close and reopen the settings window to load the new UI.')
+            _install_process([wrapper, 'update', '--restart', result['version']], directory, event)
+    notify(stage='done', version=result['version'], updated=True, installed=True)
+    if confirm:
+        print('Update complete. Close and reopen the settings window to load the new UI.')
+
+
+
+def _install_process(args: list[str], directory: str, event) -> None:
+    if event is None:
+        subprocess.run(args, check=True)
+        return
+    # Package-manager output must never become part of the GUI JSON protocol.
+    # Keep transaction ownership until the child finishes; no kill timeout.
+    with (Path(directory) / 'installer.log').open('w+b') as log:
+        try:
+            subprocess.run(args, check=True, stdout=log, stderr=log)
+        except subprocess.CalledProcessError as exc:
+            log.seek(0, os.SEEK_END)
+            log.seek(max(0, log.tell() - 4096))
+            detail = log.read().decode('utf-8', errors='replace').strip()
+            raise ValueError(str(exc) + (': ' + detail if detail else '')) from exc
+
+
+def gui_install(restart_version: str | None = None) -> None:
+    installed = restart_version is not None
+    selected_version = restart_version
+
+    def emit(**fields):
+        nonlocal installed, selected_version
+        selected_version = fields.get("version") or selected_version
+        installed = installed or fields.get('installed', False)
+        try:
+            print(json.dumps(fields, ensure_ascii=False), flush=True)
+        except BrokenPipeError:
+            # Closing the UI must not interrupt apt/dnf or release its locks.
+            sys.stdout = open(os.devnull, 'w')
+
+    try:
+        if restart_version is None:
+            install(confirm=False, event=emit)
+        else:
+            version(restart_version)
+            from .cli import request
+            with installation_signals(), update_lock(), runtime_update_lock():
+                if not request('ping', timeout=1).get('ok'):
+                    from .service import start_daemon
+                    if not start_daemon(wait=15):
+                        raise ValueError('Could not restore the daemon before restart')
+                ready = request('update-ready', timeout=10)
+                if not ready.get('ok'):
+                    raise ValueError('Daemon is not ready to restart: ' + str(ready.get('error', '')))
+                emit(stage='restart', installed=True)
+                launcher = shutil.which('wayvoice')
+                if not launcher:
+                    raise ValueError('Installed launcher is unavailable')
+                with tempfile.TemporaryDirectory(prefix='wayvoice-restart-') as directory:
+                    _install_process([launcher, 'update', '--restart', restart_version], directory, emit)
+            emit(stage='done', installed=True, version=restart_version, updated=False)
+    except (OSError, ValueError, KeyError, EOFError, subprocess.SubprocessError) as exc:
+        emit(stage='error', message=str(exc), installed=installed, version=selected_version)
+        raise SystemExit(1)
 
 
 def restart(number: str) -> None:
@@ -236,6 +304,12 @@ def restart(number: str) -> None:
 
 
 def command(args: list[str]) -> None:
+    if len(args) == 2 and args[0] == '--gui-restart':
+        gui_install(args[1])
+        return
+    if args == ['--gui-install']:
+        gui_install()
+        return
     try:
         if args in (['--install'], ['--interactive']):
             install()
