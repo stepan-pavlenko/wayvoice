@@ -12,7 +12,7 @@ WayVoice uses GTK 4 and libadwaita, records through PipeWire, and supports Faste
 
 **Status:** alpha. GNOME Wayland is the primary tested desktop. KDE Plasma integration is implemented, but complete installed dictation and paste checks are still pending. wlroots desktops and installed Flatpak builds also need testing.
 
-This README describes version **0.6.10**. Older packages may not include the in-app updater or ten-language interface; check their release notes.
+**0.6.10** is the latest published version. This branch also includes unreleased interface and updater changes; check the changelog before comparing it with an installed package.
 
 ## Screenshots
 
@@ -105,6 +105,8 @@ wayvoice-settings --indicator
 
 Drag the indicator by its status row. Its window menu exposes desktop actions; in KDE, use **Keep Above** to keep it over other windows. Closing Settings or the indicator does not stop the background daemon.
 
+In the development version, **Ctrl+Shift+C** copies the last dictation and **Ctrl+,** opens Settings.
+
 ### Shortcuts and paste on Wayland
 
 | Desktop | Shortcut setup |
@@ -162,7 +164,7 @@ wayvoice update --check
 wayvoice update --install
 ```
 
-The updater downloads a matching DEB or RPM from the latest stable GitHub release, checks its SHA-256 and package metadata, and opens the system package manager with administrator authorization. If that release has no package for your architecture, it reports an error. Finish dictation and model preparation first. New recordings are blocked during installation; the services restart and the daemon's version is checked afterwards. Reopen Settings to load the new interface.
+The updater downloads a matching DEB or RPM from the latest stable GitHub release, checks its SHA-256 and package metadata, and opens the system package manager with administrator authorization. If that release has no package for your architecture, it reports an error. Finish dictation and model preparation first. New recordings are blocked during installation; the services restart and the daemon's version is checked afterwards. On this development branch, the update runs inside the app and restarts the interface automatically. Version 0.6.10 opens a terminal and requires reopening Settings.
 
 The updater requires a compatible running daemon. Older installations need a manual package upgrade first. It does not update source checkouts or Flatpak installations, and it does not automatically roll back failed package transactions. Release checksums verify integrity against the published release; they are not independent package signatures.
 
