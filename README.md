@@ -12,7 +12,7 @@ WayVoice uses GTK 4 and libadwaita, records through PipeWire, and supports Faste
 
 **Status:** alpha. GNOME Wayland is the primary tested desktop. KDE Plasma integration is implemented, but complete installed dictation and paste checks are still pending. wlroots desktops and installed Flatpak builds also need testing.
 
-This README describes the current development branch. The in-app updater and ten-language interface are available in `develop` and have not yet been published in a release. Check the release notes before installing a package.
+This README describes version **0.6.9**. Older packages may not include the in-app updater or ten-language interface; check their release notes.
 
 ## Screenshots
 

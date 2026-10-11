@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.6.9 — 2026-10-11
+
+- Added first-run setup for interface language and a local model, with explicit preparation, cancellation, retry and deferral.
+- Added KDE Plasma shortcut configuration through a daemon-owned GlobalShortcuts portal, with actual binding feedback and a manual fallback.
+- Made the status indicator compact and draggable, with desktop window actions for Keep Above where supported.
+- Added explicit GitHub Release updates for installed DEB/RPM packages: checksum and metadata checks, installation-time recording protection, service restart and daemon version verification.
+- Expanded the interface to ten languages: English, Russian, Spanish, Portuguese, French, German, Simplified Chinese, Japanese, Arabic and Hindi. Added Arabic RTL layout and bundled offline translations.
+- Fixed settings width, active-engine language handling, invalid configuration recovery, daemon restart ownership, package-removal cleanup and bundled input-helper edge cases.
+- Updated the README and contribution guidance, added English UI screenshots, and added GTK UI checks to CI.
+
+Installed self-update, complete KDE dictation/paste and Flatpak desktop acceptance remain pending. This is an alpha release; automated checks do not establish support for every desktop.
+
 ## 0.6.8 — 2026-10-10
 
 - Fedora RPM explicitly requires the Cairo introspection provider so GTK/Adwaita can load on minimal installations.
