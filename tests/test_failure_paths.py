@@ -91,6 +91,29 @@ class RunCancelableTests(unittest.TestCase):
         self.assertTrue(result.stdout.endswith("done"))
 
 
+    def test_oversized_recognition_output_stops_child_and_releases_job(self):
+        import sys
+        with self.assertRaisesRegex(RuntimeError, 'output exceeds text limit'):
+            engine._run_cancelable(
+                [sys.executable, '-c',
+                 "import sys,time; sys.stdout.write('x' * 2000000); sys.stdout.flush(); time.sleep(60)"],
+                timeout=5, cancel_event=None,
+            )
+        self.assertFalse(engine._job_procs)
+
+    def test_stderr_flood_keeps_only_tail_without_blocking_transcript(self):
+        import sys
+        result = engine._run_cancelable(
+            [sys.executable, '-c',
+             "import sys; sys.stderr.write('x' * 2000000 + 'last diagnostic'); print('transcript')"],
+            timeout=5, cancel_event=None,
+        )
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(result.stdout.strip(), 'transcript')
+        self.assertEqual(len(result.stderr), engine.PROCESS_ERROR_TAIL)
+        self.assertTrue(result.stderr.endswith('last diagnostic'))
+
+
 class InstallTimeoutTests(unittest.TestCase):
     """A timeout has to take the package manager's children with it.
 
