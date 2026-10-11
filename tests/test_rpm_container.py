@@ -1,6 +1,7 @@
 """Exercise registry failures without Docker or network access."""
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -57,3 +58,40 @@ sys.exit(int(os.environ['RUN_EXIT']))
         result, calls = self.run_builder(run_exit=17)
         self.assertEqual(result.returncode, 17)
         self.assertEqual([call[0] for call in calls], ['pull', 'run'])
+
+
+class RpmArtifactTests(unittest.TestCase):
+    def test_rebuild_does_not_publish_stale_rpm_and_removes_owned_workspace(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base = Path(directory)
+            for name in ('app', 'scripts', 'systemd', 'data', 'packaging', 'third_party', 'bin'):
+                (base / name).mkdir()
+            for name in ('README.md', 'CHANGELOG.md', 'LICENSE'):
+                (base / name).write_text('fixture')
+            shutil.copy2(ROOT / 'scripts/build-rpm.sh', base / 'scripts/build-rpm.sh')
+            (base / 'scripts/check-version.py').write_text("print('1.2.3')\n")
+            stale = base / 'build/rpm/RPMS/x86_64/wayvoice-1.2.3-1.fc43.x86_64.rpm'
+            stale.parent.mkdir(parents=True)
+            stale.write_text('stale')
+            rpm = base / 'bin/rpm'
+            rpm.write_text('#!/bin/sh\ncase "$*" in\n*VERSION*) echo 1.2.3;;\n*) echo x86_64;;\nesac\n')
+            rpm.chmod(0o755)
+            builder = base / 'bin/rpmbuild'
+            builder.write_text(f'''#!{sys.executable}
+import sys
+from pathlib import Path
+args = sys.argv
+top = Path(next(a.split(' ', 1)[1] for a in args if a.startswith('_topdir ')))
+out = top / 'RPMS/x86_64/wayvoice-1.2.3-1.fc44.x86_64.rpm'
+out.parent.mkdir(parents=True, exist_ok=True)
+out.write_text('fresh')
+''')
+            builder.chmod(0o755)
+            env = dict(os.environ, PATH=f'{base / "bin"}:{os.environ["PATH"]}', SOURCE_DATE_EPOCH='1')
+            result = subprocess.run(['bash', str(base / 'scripts/build-rpm.sh')],
+                                    env=env, capture_output=True, text=True, timeout=5)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual([p.name for p in (base / 'dist').glob('*.rpm')],
+                             ['wayvoice-1.2.3-1.fc44.x86_64.rpm'])
+            self.assertTrue(stale.exists(), 'Unrelated previous output must be preserved')
+            self.assertEqual(list((base / 'build').glob('rpm.*')), [])

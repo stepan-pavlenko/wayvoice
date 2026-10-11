@@ -19,7 +19,7 @@ def shortcut_capture(window, binding, t, disable_binding, capture_key):
     hint = make_label(t("shortcut.hint"), "muted", wrap=True, xalign=0.5)
     hint.set_halign(Gtk.Align.CENTER)
     box.append(hint)
-    key_label = make_label(label_for(binding), "capture-key", xalign=0.5)
+    key_label = make_label((label_for(binding) if binding else t("shortcut.disabled")), "capture-key", xalign=0.5)
     key_label.set_halign(Gtk.Align.CENTER)
     box.append(key_label)
     buttons = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)

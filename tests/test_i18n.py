@@ -5,6 +5,26 @@ from wayvoice.i18n import (_EN, _RU, _TRANSLATIONS, SUPPORTED_UI_LANGUAGES,
                            resolve_language, tr, ui_language_labels)
 
 class I18nTests(unittest.TestCase):
+    def setUp(self):
+        environment = mock.patch.dict('os.environ', {}, clear=True)
+        environment.start()
+        self.addCleanup(environment.stop)
+
+    def test_message_locale_and_language_preferences_override_formats(self):
+        with mock.patch.dict('os.environ', {'LANG': 'en_US.UTF-8', 'LC_CTYPE': 'en_US.UTF-8',
+                                           'LC_MESSAGES': 'de_DE.UTF-8'}):
+            self.assertEqual(resolve_language('auto'), 'de')
+            with mock.patch.dict('os.environ', {'LANGUAGE': 'uk:fr:en'}):
+                self.assertEqual(resolve_language('auto'), 'fr')
+            with mock.patch.dict('os.environ', {'LC_ALL': 'C.UTF-8', 'LANGUAGE': 'de'}):
+                self.assertEqual(resolve_language('auto'), 'en')
+                self.assertEqual(resolve_language('ar'), 'ar')
+
+    def test_disabled_shortcut_label_uses_interface_language(self):
+        from wayvoice.shortcut import label_for
+        for language in ('en', 'de', 'ar', 'ru'):
+            self.assertEqual(label_for('', language), tr('shortcut.disabled', language))
+
     def test_explicit_languages(self):
         self.assertEqual(resolve_language("ru"), "ru")
         self.assertEqual(resolve_language("en"), "en")

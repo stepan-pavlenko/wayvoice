@@ -48,6 +48,10 @@ WARM_TIMEOUT = 900.0
 WORKER_CANCEL_GRACE = 3.0
 WORKER_RETRY_BACKOFF = 60.0
 
+# Text limits count decoded characters; even four-byte Unicode stays bounded.
+TRANSCRIPT_OUTPUT_LIMIT = 1024 * 1024
+PROCESS_ERROR_TAIL = 64 * 1024
+
 _job_lock = Lock()
 _job_procs: dict[subprocess.Popen, Event | None] = {}
 _worker_jobs: dict[Event, int] = {}
@@ -326,8 +330,12 @@ def _start_line_readers(
 
     def read(stream, sink):
         try:
-            for line in iter(stream.readline, ""):
-                sink.append(line)
+            if sink is err:
+                while chunk := stream.read(8192):
+                    sink[:] = [("".join(sink) + chunk)[-PROCESS_ERROR_TAIL:]]
+            else:
+                for line in iter(stream.readline, ""):
+                    sink.append(line)
         except Exception:
             pass
 
@@ -594,7 +602,9 @@ def _terminate_process(proc: subprocess.Popen[str], timeout: float = 1.5) -> boo
     return True
 
 
-def _start_readers(proc: subprocess.Popen[str]) -> tuple[list[threading.Thread], list[str], list[str]]:
+def _start_readers(
+    proc: subprocess.Popen[str], overflow: Event | None = None,
+) -> tuple[list[threading.Thread], list[str], list[str]]:
     """Begin draining the child's pipes at once and return the buffers.
 
     :func:`_run_cancelable` polls the child rather than talking to it, so nothing
@@ -605,10 +615,20 @@ def _start_readers(proc: subprocess.Popen[str]) -> tuple[list[threading.Thread],
     err: list[str] = []
 
     def read(stream, sink):
+        retained = 0
         try:
-            sink.append(stream.read() or "")
+            while chunk := stream.read(8192):
+                if sink is err:
+                    sink[:] = [("".join(sink) + chunk)[-PROCESS_ERROR_TAIL:]]
+                else:
+                    available = TRANSCRIPT_OUTPUT_LIMIT - retained
+                    if available > 0:
+                        sink.append(chunk[:available])
+                        retained += min(len(chunk), available)
+                    if len(chunk) > available and overflow is not None:
+                        overflow.set()
         except Exception:
-            sink.append("")
+            pass
 
     threads: list[threading.Thread] = []
     for stream, sink in ((proc.stdout, out), (proc.stderr, err)):
@@ -668,9 +688,12 @@ def _run_cancelable(
         start_new_session=True,
     )
     try:
-        readers, out, err = _start_readers(proc)
+        overflow = Event()
+        readers, out, err = _start_readers(proc, overflow)
         started = time.monotonic()
         while proc.poll() is None:
+            if overflow.is_set():
+                raise _finish(proc, readers, RuntimeError("Recognition output exceeds text limit"))
             if cancel_event is not None and cancel_event.is_set():
                 raise _finish(
                     proc, readers, TranscriptionCancelled("Transcription cancelled")
@@ -686,6 +709,8 @@ def _run_cancelable(
         for thread in readers:
             thread.join(timeout=5.0)
         _close_pipes(proc)
+        if overflow.is_set():
+            raise RuntimeError("Recognition output exceeds text limit")
         return subprocess.CompletedProcess(
             args, proc.returncode, "".join(out), "".join(err)
         )

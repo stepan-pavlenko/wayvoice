@@ -1,0 +1,108 @@
+"""GUI update ownership and restart are tested without installing any package."""
+import io
+import unittest
+from unittest import mock
+try:
+    import gi
+    gi.require_version('Gtk', '4.0')
+    gi.require_version('Adw', '1')
+    from gi.repository import Gtk, Adw, Gio
+    from wayvoice.ui.dialogs.update import UpdateDialog, show_update
+    from wayvoice.ui.window import WayVoiceWindow
+    from wayvoice.ui.state import UiState
+except (ImportError, ValueError):
+    UpdateDialog = None
+
+
+@unittest.skipIf(UpdateDialog is None, 'GTK unavailable')
+class UpdateUITests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        if not Gtk.init_check():
+            raise unittest.SkipTest('GTK display unavailable')
+        cls.app = Adw.Application(application_id='io.github.stepan.WayVoice.UpdateTest',
+                                  flags=Gio.ApplicationFlags.NON_UNIQUE)
+        cls.app.register(None)
+
+    def setUp(self):
+        with mock.patch('wayvoice.ui.window.TaskRunner') as runner, \
+             mock.patch('wayvoice.ui.window.load_config', return_value={'ui_language': 'en'}):
+            self.window = WayVoiceWindow(self.app)
+        self.addCleanup(self.window.destroy)
+        self.window.tasks.run.reset_mock()
+        self.update = UpdateDialog(self.window)
+        self.window._update_dialog = self.update
+        self.addCleanup(self.update.dialog.destroy)
+
+    def test_one_dialog_and_no_install_for_source_or_flatpak(self):
+        show_update(self.window)
+        self.assertIs(self.window._update_dialog, self.update)
+        self.update._checked({'available': True, 'version': '99.0.0'})
+        self.assertFalse(self.update.install_button.get_visible())
+        self.update._unsupported(ValueError('source checkout'))
+        self.assertIn('Flatpak', self.update.dialog.get_body())
+
+    def test_busy_blocks_close_and_failure_restores_controls(self):
+        self.update._start()
+        self.assertTrue(self.window._close_requested())
+        self.update.dialog.close()
+        self.assertTrue(self.update.dialog.get_visible())
+        self.assertFalse(self.update.dialog.get_response_enabled('close'))
+        self.update._failed(RuntimeError('authorization declined'))
+        self.assertFalse(self.window._update_busy)
+        self.assertTrue(self.update.dialog.get_response_enabled('close'))
+        self.assertIn('declined', self.update.details.get_text())
+
+    def test_process_protocol_and_confirmed_success_restart(self):
+        process = mock.Mock()
+        process.stdout = io.StringIO('{"stage":"download"}\n{"stage":"done","version":"99.0.0"}\n')
+        process.wait.return_value = 0
+        process.__enter__ = mock.Mock(return_value=process)
+        process.__exit__ = mock.Mock(return_value=False)
+        with mock.patch('wayvoice.ui.dialogs.update.subprocess.Popen', return_value=process) as popen, \
+             mock.patch('wayvoice.ui.dialogs.update.shutil.which', return_value='/prefix/bin/wayvoice'):
+            result = self.update._transaction()
+        self.assertTrue(popen.call_args.kwargs['start_new_session'])
+        self.assertEqual(popen.call_args.args[0][-1], '--gui-install')
+        with mock.patch('wayvoice.ui.application.restart_installed_ui') as restart:
+            self.update._finished(result)
+            restart.assert_called_once_with(self.window)
+
+    def test_restart_failure_preserves_window_and_status_does_not_compete(self):
+        self.update._start()
+        with mock.patch('wayvoice.ui.controllers.status.service.restart_daemon') as restart:
+            self.assertFalse(self.window.context.status._maybe_restart({'ok': True, 'version': '99.0.0'}))
+            restart.assert_not_called()
+        with mock.patch('wayvoice.ui.application.restart_installed_ui', side_effect=OSError('launcher failed')):
+            self.update._finished({'stage': 'done'})
+        self.assertFalse(self.window._update_busy)
+        self.assertIn('launcher failed', self.update.details.get_text())
+
+    def test_save_then_update_waits_until_save_leaves_mutation_queue(self):
+        prefs = self.window.context.preferences
+        with mock.patch.object(prefs, 'has_unsaved_changes', return_value=True), \
+             mock.patch.object(prefs, 'confirm_leaving') as confirm:
+            self.update._install()
+        prefs._mutations.append(('save', None, None))
+        confirm.call_args.args[0]()
+        self.assertFalse(self.update.busy)
+        deferred = self.window.tasks.idle.call_args.args[0]
+        prefs._mutations.clear()
+        deferred()
+        self.assertTrue(self.update.busy)
+
+    def test_restart_retry_keeps_actual_installed_version_and_skips_install(self):
+        from wayvoice.ui.dialogs.update import UpdateFailure
+        self.update.can_install = True
+        self.update.target_version = '1.0.0'
+        self.update._failed(UpdateFailure('restart failed', installed=True, version='1.0.1'))
+        self.assertTrue(self.update.install_button.get_visible())
+        self.assertTrue(self.update.restart_only)
+        process = mock.MagicMock()
+        process.__enter__.return_value = process
+        process.stdout = io.StringIO('{"stage":"done","version":"1.0.1"}\n')
+        process.wait.return_value = 0
+        with mock.patch('wayvoice.ui.dialogs.update.subprocess.Popen', return_value=process) as popen, \
+             mock.patch('wayvoice.ui.dialogs.update.shutil.which', return_value='/prefix/bin/wayvoice'):
+            self.update._transaction()
+        self.assertEqual(popen.call_args.args[0], ['/prefix/bin/wayvoice', 'update', '--gui-restart', '1.0.1'])

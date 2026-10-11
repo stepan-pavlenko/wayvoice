@@ -77,10 +77,11 @@ class ModelOperationsTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             wav = Path(tmp) / 'take.wav'
             wav.write_bytes(b'audio')
-            with mock.patch.object(mod, 'load_config', return_value=cfg), mock.patch.object(mod, 'transcribe', return_value='hello'), mock.patch.object(mod, 'inject', return_value=SimpleNamespace(warning='')) as inject, mock.patch.object(mod, 'notify'), mock.patch.object(mod, 'reset_notification_id'):
+            with mock.patch.object(mod, 'load_config', return_value=cfg), mock.patch.object(mod, 'transcribe', return_value='hello'), mock.patch.object(mod, 'inject', return_value=SimpleNamespace(warning='', pasted=False)) as inject, mock.patch.object(mod, 'notify'), mock.patch.object(mod, 'reset_notification_id'):
                 self.d._transcribe_worker(wav, delivery_mode='copy')
         self.assertEqual(inject.call_args.args[1]['paste_mode'], 'copy')
         self.assertEqual(cfg['paste_mode'], 'standard')
+        self.assertEqual(self.d.last_error, '')
 
     def test_clear_text_only_clears_current_text(self):
         self.d.last_text = 'private text'

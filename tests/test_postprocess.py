@@ -6,6 +6,11 @@ class PostprocessTests(unittest.TestCase):
         text = normalize("привет запятая мир точка", spoken_punctuation=True)
         self.assertEqual(text, "Привет, мир.")
 
+    def test_unicode_sentence_endings_are_preserved(self):
+        for language, text in [('ja', 'こんにちは。'), ('zh', '你好！'), ('ar', 'كيف حالك؟')]:
+            with self.subTest(language=language):
+                self.assertEqual(normalize(text, language=language), text)
+
     def test_terminal_punctuation(self):
         self.assertEqual(normalize("привет мир"), "Привет мир.")
 

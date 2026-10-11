@@ -31,6 +31,8 @@ class WayVoiceWindow(Adw.ApplicationWindow):
         self.state = UiState(load_config())
         set_text_direction(self, self.state.ui_lang)
         self.tasks = TaskRunner()
+        self._update_busy = False
+        self._update_dialog = None
         self._close_pending = False
         self._quit_pending = False
         ctx = self.context = UiContext(self, self.state, self.tasks)
@@ -44,10 +46,12 @@ class WayVoiceWindow(Adw.ApplicationWindow):
         self.home = HomePage(ctx)
         self.settings = SettingsPage(ctx)
         self._install_css()
-        for name, callback in (('update', lambda *_: show_update(self)), ('indicator', self._show_indicator), ('help', self._show_help), ('about', self._show_about), ('diagnostics', ctx.status._copy_diagnostics), ('quit', self._quit)):
+        for name, callback in (('update', lambda *_: show_update(self)), ('copy-last-text', ctx.status.transcript.copy), ('settings', lambda *_: self.open_settings('engine_status_row')), ('indicator', self._show_indicator), ('help', self._show_help), ('about', self._show_about), ('diagnostics', ctx.status._copy_diagnostics), ('quit', self._quit)):
             action = Gio.SimpleAction.new(name, None)
             action.connect('activate', callback)
             self.add_action(action)
+        app.set_accels_for_action('win.copy-last-text', ['<Primary><Shift>c'])
+        app.set_accels_for_action('win.settings', ['<Primary>comma'])
         self.stack = Adw.ViewStack()
         self.stack.set_vexpand(True)
         self.stack.add_titled_with_icon(self.home.root, 'home', self.t('nav.home'), 'audio-input-microphone-symbolic')
@@ -144,6 +148,9 @@ class WayVoiceWindow(Adw.ApplicationWindow):
         return True
 
     def _close_requested(self, *_args):
+        if self._update_busy:
+            self._toast(self.t("update.busy"))
+            return True
         if self.context.preferences._mutations:
             # An accepted Save must finish; the GTK loop remains responsive.
             self._close_pending = True
@@ -162,6 +169,9 @@ class WayVoiceWindow(Adw.ApplicationWindow):
             self.close()
 
     def _quit(self, *_args):
+        if self._update_busy:
+            self._toast(self.t("update.busy"))
+            return
         if self.context.preferences._mutations:
             self._quit_pending = True
             return

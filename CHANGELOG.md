@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.6.11 — 2026-10-11
+
+- Run native package updates inside the app, with progress, retry, service verification and automatic interface restart. Flatpak and source installations show their own update route.
+- Compact the Status card and add shortcuts for copying the last dictation and opening Settings.
+- Respect the system message language in automatic UI selection and localize disabled shortcut labels.
+- Prevent late cancellation from sending paste keys, distinguish copying from insertion, and preserve Unicode sentence endings.
+- Bound external recognizer output and diagnostic buffers.
+- Require GTK tests before release publication and isolate RPM build workspaces.
+
 ## 0.6.10 — 2026-10-11
 
 - Removed empty shortcut hints and reduced spacing in the dictation card.
