@@ -560,6 +560,28 @@ class InjectTests(unittest.TestCase):
         self.assertFalse(result.pasted)
         self.assertFalse(paste.called)
 
+    def test_cancel_during_delivery_never_sends_keys(self):
+        import threading
+
+        for stage in ("clipboard", "helper", "settle"):
+            with self.subTest(stage=stage):
+                cancelled = threading.Event()
+
+                def cancel_at(name):
+                    if stage == name:
+                        cancelled.set()
+                    return True
+
+                with self._ydotool_present(), \
+                     mock.patch.object(injector, "copy_to_clipboard", side_effect=lambda *a: cancel_at("clipboard")) as copy, \
+                     mock.patch.object(injector, "ensure_helper_running", side_effect=lambda: cancel_at("helper")), \
+                     mock.patch.object(injector.time, "sleep", side_effect=lambda *a: cancel_at("settle")), \
+                     self._ydotool() as keys:
+                    with self.assertRaises(injector.InjectionCancelled):
+                        injector.inject("recoverable text", {"paste_mode": "standard"}, cancel_event=cancelled)
+                copy.assert_called_once()
+                keys.assert_not_called()
+
     def test_standard_mode_pastes(self):
         with self._no_clipboard(), self._ydotool(), self._ydotool_present():
             result = injector.inject("текст", {"paste_mode": "standard"})

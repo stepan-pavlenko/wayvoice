@@ -40,6 +40,15 @@ class InjectionError(RuntimeError):
     pass
 
 
+class InjectionCancelled(RuntimeError):
+    """Delivery was cancelled before keyboard input; any copied text remains."""
+
+
+def _check_cancelled(cancel_event) -> None:
+    if cancel_event is not None and cancel_event.is_set():
+        raise InjectionCancelled("Text delivery cancelled")
+
+
 @dataclass
 class InjectionResult:
     pasted: bool
@@ -251,7 +260,9 @@ def _ydotool_env() -> dict[str, str]:
     return env
 
 
-def paste_with_ydotool(mode: str, language: str | None = None) -> tuple[bool, str]:
+def paste_with_ydotool(mode: str, language: str | None = None, *,
+                       cancel_event=None) -> tuple[bool, str]:
+    _check_cancelled(cancel_event)
     command = ydotool_command()
     if not command:
         detail = describe_missing("ydotool", language)
@@ -275,6 +286,7 @@ def paste_with_ydotool(mode: str, language: str | None = None) -> tuple[bool, st
     env = _ydotool_env()
 
     time.sleep(0.08)
+    _check_cancelled(cancel_event)
     try:
         cp = _run([command, "key", *seq], env=env, timeout=1.2,
                   capture_stdout=True)
@@ -302,13 +314,15 @@ def paste_with_ydotool(mode: str, language: str | None = None) -> tuple[bool, st
     return True, ""
 
 
-def inject(text: str, cfg: dict[str, Any]) -> InjectionResult:
+def inject(text: str, cfg: dict[str, Any], *, cancel_event=None) -> InjectionResult:
     if not text:
         return InjectionResult(pasted=False)
     language = cfg.get("ui_language")
+    _check_cancelled(cancel_event)
     copy_to_clipboard(text, language)
+    _check_cancelled(cancel_event)
     mode = str(cfg.get("paste_mode", "standard"))
     if mode == "copy":
         return InjectionResult(pasted=False)
-    pasted, warning = paste_with_ydotool(mode, language)
+    pasted, warning = paste_with_ydotool(mode, language, cancel_event=cancel_event)
     return InjectionResult(pasted=pasted, warning=warning)

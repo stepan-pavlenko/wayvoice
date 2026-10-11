@@ -136,6 +136,27 @@ class SuccessfulDictationTests(unittest.TestCase):
         self.assertEqual(daemon.last_error, "")
         self.assertEqual(daemon.last_warning, "буфер")
 
+    def test_copy_only_result_is_announced_as_copied(self):
+        daemon = self._daemon()
+        self._run(daemon, pasted=False)
+        summaries = [args[0] for args, _kwargs in self.calls if args]
+        self.assertIn(tr("daemon.text_copied", "en"), summaries)
+        self.assertNotIn(tr("daemon.text_inserted", "en"), summaries)
+
+    def test_cancel_after_clipboard_preserves_result_without_typing(self):
+        from wayvoice import injector
+
+        daemon = self._daemon()
+        with mock.patch.object(daemon_mod, "transcribe", return_value="recoverable text"), \
+             mock.patch.object(injector, "copy_to_clipboard", side_effect=lambda *a: daemon._transcribe_cancel.set()), \
+             mock.patch.object(injector, "paste_with_ydotool") as paste:
+            daemon._transcribe_worker(Path("/tmp/does-not-matter.wav"))
+        paste.assert_not_called()
+        self.assertEqual(daemon.last_text, "recoverable text")
+        self.assertEqual(daemon.last_error, "")
+        self.assertEqual(daemon.last_warning, tr("daemon.recognition_cancelled", "en"))
+        self.assertFalse(daemon.busy)
+
 
 class NotifyCallSiteTests(unittest.TestCase):
     """No call site may pass more arguments than the function takes.

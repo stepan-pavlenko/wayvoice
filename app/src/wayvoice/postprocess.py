@@ -159,7 +159,7 @@ def _capitalize_sentences(text: str) -> str:
             if capitalize_next and ch.isalpha():
                 chars[position] = ch.upper()
                 capitalize_next = False
-            if ch in ".!?":
+            if ch in ".!?。！？؟":
                 capitalize_next = True
             elif ch not in "\"'«„(":
                 capitalize_next = False
@@ -186,6 +186,6 @@ def normalize(
 
     if ensure_terminal_punctuation and text:
         last = text.rstrip()[-1]
-        if last not in ".!?…:;)]}»\"'":
+        if last not in ".!?。！？؟…:;)]}»\"'":
             text += "."
     return text

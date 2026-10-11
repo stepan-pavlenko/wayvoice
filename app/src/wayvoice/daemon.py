@@ -33,7 +33,7 @@ from .engine import (
     request_engine_setup,
     transcribe,
 )
-from .injector import InjectionError, inject
+from .injector import InjectionCancelled, InjectionError, inject
 from .i18n import tr
 from .notify import notify, reset_notification_id
 from .protocol import owner_lock_path, socket_path
@@ -398,7 +398,7 @@ class WayVoiceDaemon:
             "config_error": config_error(),
             "engine": engine_status(cfg),
             "model": self._model_report(cfg),
-            "shortcut": label_for(str(cfg.get("shortcut", "F8"))),
+            "shortcut": label_for(str(cfg.get("shortcut", "F8")), cfg.get("ui_language")),
             "shortcut_portal": self._shortcut_portal.snapshot() if self._shortcut_portal is not None else None,
         }
 
@@ -702,16 +702,17 @@ class WayVoiceDaemon:
                 delivery_cfg = dict(cfg)
                 if delivery_mode == "copy":
                     delivery_cfg["paste_mode"] = "copy"
-                result = inject(text, delivery_cfg)
+                result = inject(text, delivery_cfg, cancel_event=self._transcribe_cancel)
                 if result.warning:
                     self.last_warning = result.warning
                     notify(result.warning, enabled=cfg.get("notify", True))
                 else:
-                    notify(tr("daemon.text_inserted", cfg.get("ui_language")), text.strip()[:160] if cfg.get("notify_transcript") is True else "", enabled=cfg.get("notify", True))
+                    key = "daemon.text_inserted" if result.pasted else "daemon.text_copied"
+                    notify(tr(key, cfg.get("ui_language")), text.strip()[:160] if cfg.get("notify_transcript") is True else "", enabled=cfg.get("notify", True))
             except InjectionError as exc:
                 self.last_error = str(exc)
                 notify(str(exc), enabled=cfg.get("notify", True))
-        except TranscriptionCancelled:
+        except (TranscriptionCancelled, InjectionCancelled):
             self.last_error = ""
             self.last_warning = tr("daemon.recognition_cancelled", cfg.get("ui_language"))
             notify(self.last_warning, enabled=cfg.get("notify", True))
