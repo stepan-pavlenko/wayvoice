@@ -19,7 +19,9 @@ def setup_steps(reply, cfg, missing_deps):
         weights = 'setup.model_external'
     capture = 'setup.capture_missing' if 'pipewire' in ids else 'setup.capture_available'
     delivery = 'setup.clipboard_missing' if 'wl-clipboard' in ids else 'setup.clipboard_available'
-    shortcut = ('setup.shortcut_disabled' if not cfg.get('shortcut') else
+    portal = reply.get('shortcut_portal')
+    has_shortcut = bool(portal.get('trigger')) if portal is not None else bool(cfg.get('shortcut'))
+    shortcut = ('setup.shortcut_disabled' if not has_shortcut else
                 'setup.shortcut_configured' if (reply.get('shortcut_support') or (False, ''))[0]
                 else 'setup.shortcut_manual')
     return [('engine_status_row', recognition), ('model_state_row', weights),

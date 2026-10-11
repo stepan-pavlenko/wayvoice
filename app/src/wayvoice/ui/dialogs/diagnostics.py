@@ -13,6 +13,7 @@ def diagnostics_preview(parent, text, t, on_copy):
         getattr(box, f"set_margin_{side}")(18)
     box.append(make_label(t("diagnostics.preview_notice"), wrap=True))
     view = Gtk.TextView(editable=False, cursor_visible=False, monospace=True)
+    view.set_direction(Gtk.TextDirection.LTR)
     view.set_wrap_mode(Gtk.WrapMode.WORD_CHAR)
     view.get_buffer().set_text(text)
     scroll = Gtk.ScrolledWindow(vexpand=True)

@@ -73,7 +73,8 @@ class OwnedJobTests(unittest.TestCase):
             entered.set()
             release.wait(2)
             return True, 'ok'
-        with (mock.patch('wayvoice.ui.controllers.settings.apply_shortcut', side_effect=shortcut),
+        with (mock.patch('wayvoice.ui.controllers.settings.manual_shortcut_required', return_value=False),
+              mock.patch('wayvoice.ui.controllers.settings.apply_shortcut', side_effect=shortcut),
               mock.patch.object(ctx.preferences,'_prepare_selected_engine') as prepare):
             ctx.state.shortcut_binding = 'F8'
             ctx.preferences._save()

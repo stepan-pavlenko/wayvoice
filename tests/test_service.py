@@ -4,6 +4,8 @@ Nothing here really starts a process or waits on a socket: both the daemon socke
 ``subprocess`` are mocked, so the module runs offline and instantly.
 """
 
+import os
+import struct
 import subprocess
 import tempfile
 import unittest
@@ -150,7 +152,7 @@ class RestartDaemonTests(unittest.TestCase):
         alive = mock.Mock(side_effect=[True, False, False, True])
         with mock.patch.object(service, "systemd_available", return_value=False):
             with mock.patch.object(service, "daemon_socket_alive", alive):
-                with mock.patch.object(service, "_request", return_value={"ok": True}) as request:
+                with mock.patch.object(service, "_request", return_value={"ok": True}) as request, mock.patch.object(service, "_daemon_pidfd", return_value=None):
                     with mock.patch.object(service, "start_daemon", return_value=True) as start:
                         self.assertTrue(service.restart_daemon(wait=0.3))
         request.assert_called_once_with("quit", timeout=1.0)
@@ -159,11 +161,11 @@ class RestartDaemonTests(unittest.TestCase):
     def test_direct_path_terminates_a_daemon_that_ignores_quit(self):
         with mock.patch.object(service, "systemd_available", return_value=False):
             with mock.patch.object(service, "daemon_socket_alive", return_value=True):
-                with mock.patch.object(service, "_request", return_value={"ok": True}):
+                with mock.patch.object(service, "_request", return_value={"ok": True}), mock.patch.object(service, "_daemon_pidfd", return_value=None), mock.patch.object(service, "QUIT_TIMEOUT", 0):
                     with mock.patch.object(service, "_force_stop_daemon") as force:
                         with mock.patch.object(service, "start_daemon", return_value=True):
                             self.assertTrue(service.restart_daemon(wait=0.1))
-        force.assert_called_once()
+        force.assert_called_once_with(None)
 
     def test_direct_path_without_a_daemon_only_starts(self):
         with mock.patch.object(service, "systemd_available", return_value=False):
@@ -173,6 +175,44 @@ class RestartDaemonTests(unittest.TestCase):
                         self.assertTrue(service.restart_daemon())
         request.assert_not_called()
         start.assert_called_once_with(wait=5.0)
+
+
+class DirectDaemonOwnershipTests(unittest.TestCase):
+    def test_identity_is_captured_from_socket_and_pinned_before_ping(self):
+        peer = mock.MagicMock()
+        peer.__enter__.return_value = peer
+        peer.getsockopt.return_value = struct.pack("3i", 123, os.getuid(), 100)
+        peer.recv.return_value = b'{"ok": true}\n'
+        events = []
+        with mock.patch.object(service.socket, "socket", return_value=peer), mock.patch.object(service, "_is_daemon_process", return_value=True) as identity, mock.patch.object(service.os, "pidfd_open", side_effect=lambda pid: events.append(("pin", pid)) or 42), mock.patch.object(peer, "sendall", side_effect=lambda data: events.append(("send", data))), mock.patch.object(service.os, "close") as close:
+            self.assertEqual(service._daemon_pidfd(), 42)
+        identity.assert_called_once_with(123)
+        self.assertEqual(events, [("pin", 123), ("send", b"ping\n")])
+        close.assert_not_called()
+
+    def test_dead_or_reused_peer_cannot_become_signal_target(self):
+        peer = mock.MagicMock()
+        peer.__enter__.return_value = peer
+        peer.getsockopt.return_value = struct.pack("3i", 123, os.getuid(), 100)
+        peer.recv.return_value = b""
+        with mock.patch.object(service.socket, "socket", return_value=peer), mock.patch.object(service, "_is_daemon_process", return_value=True), mock.patch.object(service.os, "pidfd_open", return_value=42), mock.patch.object(service.os, "close") as close:
+            self.assertIsNone(service._daemon_pidfd())
+        close.assert_called_once_with(42)
+
+    def test_missing_identity_never_signals(self):
+        with mock.patch.object(service.signal, "pidfd_send_signal") as kill:
+            self.assertFalse(service._force_stop_daemon(None))
+        kill.assert_not_called()
+
+    def test_escalation_uses_only_pinned_process_handle(self):
+        with mock.patch.object(service.select, "select", side_effect=[([], [], []), ([], [], []), ([], [], []), ([42], [], [])]), mock.patch.object(service.signal, "pidfd_send_signal") as kill:
+            self.assertTrue(service._force_stop_daemon(42))
+        self.assertEqual(kill.call_args_list, [mock.call(42, service.signal.SIGTERM), mock.call(42, service.signal.SIGKILL)])
+
+    def test_failed_safe_stop_does_not_report_old_daemon_as_restarted(self):
+        with mock.patch.object(service, "systemd_available", return_value=False), mock.patch.object(service, "daemon_socket_alive", return_value=True), mock.patch.object(service, "_daemon_pidfd", return_value=None), mock.patch.object(service, "_request"), mock.patch.object(service, "QUIT_TIMEOUT", 0), mock.patch.object(service, "start_daemon") as start:
+            self.assertFalse(service.restart_daemon())
+        start.assert_not_called()
 
 
 class EngineSetupRequestTests(unittest.TestCase):

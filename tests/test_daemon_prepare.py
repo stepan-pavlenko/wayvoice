@@ -19,6 +19,7 @@ from unittest import mock
 
 from wayvoice import daemon as daemon_mod
 from wayvoice.daemon import WayVoiceDaemon
+from wayvoice.config import config_path
 from wayvoice.engine import Engine
 from wayvoice.protocol import socket_path
 
@@ -547,6 +548,8 @@ class StartupTests(unittest.TestCase):
             patcher = mock.patch(target, return_value=value)
             patcher.start()
             self.addCleanup(patcher.stop)
+        config_path().parent.mkdir(parents=True, exist_ok=True)
+        config_path().write_text("{}")
         daemon = WayVoiceDaemon()
         self.addCleanup(daemon._prepare_cancel.set)
         daemon.prepare_on_start()
@@ -708,6 +711,55 @@ class AddressedPrepareTests(DaemonCase):
             self.assertIsNot(captured, cfg)
         harness.daemon._prepare_running = False
         harness.daemon._prepare_thread = None
+
+
+class DeferredSetupTests(DaemonCase):
+    def test_later_does_not_install_at_startup_or_on_hotkey(self):
+        eng, _calls = make_engine(present=False)
+        eng = replace(eng, needs_setup=True)
+        config_path().parent.mkdir(parents=True, exist_ok=True)
+        config_path().write_text("{}")
+        for deferred in (True, False):
+            with self.subTest(deferred=deferred), \
+                    mock.patch.object(daemon_mod, "load_config", return_value={
+                        "onboarding_deferred": deferred, "max_recording_sec": 120,
+                    }), mock.patch.object(daemon_mod, "engine_from_config", return_value=eng), \
+                    mock.patch.object(daemon_mod, "engine_status", return_value={
+                        "state": "missing", "message": "Prepare engine in Settings",
+                    }):
+                daemon = WayVoiceDaemon()
+                daemon.recorder = mock.Mock(recording=False)
+                daemon._prepare_engine = mock.Mock()
+                daemon._start_model_prepare = mock.Mock()
+                daemon.prepare_on_start()
+                reply = daemon.start_recording()
+                self.assertFalse(reply["ok"])
+                daemon.recorder.start.assert_not_called()
+                self.assertEqual(daemon._prepare_engine.call_count, 0 if deferred else 2)
+                self.assertEqual(daemon._start_model_prepare.call_count, 0 if deferred else 1)
+
+    def test_first_install_and_unfinished_wizard_do_not_install(self):
+        eng, _calls = make_engine(present=False)
+        eng = replace(eng, needs_setup=True)
+        for exists in (False, True):
+            if exists:
+                config_path().parent.mkdir(parents=True, exist_ok=True)
+                config_path().write_text('{"onboarding_completed": false}')
+            with self.subTest(config_exists=exists), \
+                    mock.patch.object(daemon_mod, "load_config", return_value={
+                        "max_recording_sec": 120,
+                        **({"onboarding_completed": False} if exists else {}),
+                    }), mock.patch.object(daemon_mod, "engine_from_config", return_value=eng), \
+                    mock.patch.object(daemon_mod, "engine_status", return_value={"state": "missing"}):
+                daemon = WayVoiceDaemon()
+                daemon.recorder = mock.Mock(recording=False)
+                daemon._prepare_engine = mock.Mock()
+                daemon._start_model_prepare = mock.Mock()
+                daemon.prepare_on_start()
+                self.assertFalse(daemon.start_recording()["ok"])
+                daemon._prepare_engine.assert_not_called()
+                daemon._start_model_prepare.assert_not_called()
+                daemon.recorder.start.assert_not_called()
 
 
 if __name__ == "__main__":

@@ -109,7 +109,9 @@ static void show_help() {
 
 
 static void type_char(char c, bool delay) {
-	int kdef = ascii2keycode_map[c];
+	unsigned char index = (unsigned char)c;
+	if (index >= sizeof(ascii2keycode_map) / sizeof(ascii2keycode_map[0])) return;
+	int kdef = ascii2keycode_map[index];
 	if (kdef == -1) {
 		return;
 	}

@@ -21,7 +21,7 @@ from ...engine import (
     request_engine_setup,
 )
 from ...models import forced_language
-from ...shortcut import apply_shortcut, label_for
+from ...shortcut import apply_shortcut, label_for, manual_shortcut_required
 from ..settings_values import DEVICES, PASTE_MODES, RECORD_VALUES, TIMEOUT_VALUES, UI_LANGUAGE_IDS
 
 
@@ -92,7 +92,7 @@ class SettingsController:
 
     def _draft_values(self):
         model_id = self.ctx.models._selected_model_id()
-        forced = forced_language(model_id)
+        forced = forced_language(model_id) if self._selected_engine_uses_models() else None
         language = languages.normalize(forced or self.ctx.settings.language.selected_code())
         new_ui_setting = UI_LANGUAGE_IDS[self.ctx.settings.ui_language.get_selected()]
         return {
@@ -161,9 +161,10 @@ class SettingsController:
             save_config(cfg)
             problems = []
             try:
-                ok, msg = apply_shortcut(str(updates["shortcut"]), self.ctx.state.ui_lang)
-                if not ok:
-                    problems.append(msg)
+                if not manual_shortcut_required():
+                    ok, msg = apply_shortcut(str(updates["shortcut"]), self.ctx.state.ui_lang)
+                    if not ok:
+                        problems.append(msg)
             except Exception as exc:
                 problems.append(str(exc))
             try:
@@ -203,7 +204,8 @@ class SettingsController:
             # independent status indicator alive and avoid a launcher race.
             self._restart_command = True
             return
-        self.ctx.home.hotkey_label.set_text(label_for(str(cfg["shortcut"])))
+        if cfg.get("shortcut_backend") != "portal":
+            self.ctx.home.hotkey_label.set_text(label_for(str(cfg["shortcut"])))
         self.ctx.status._update_cards()
         self.ctx.window.toast.add_toast(Adw.Toast(title=self.ctx.state.t("settings.language_pending" if language_changed else "settings.saved") if ok else self.ctx.state.t("settings.saved_warning")))
         self.ctx.models._refresh_model_state()

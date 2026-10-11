@@ -54,7 +54,7 @@ class JournalTailTests(unittest.TestCase):
         window = controller_context()
         window.status.JOURNAL_LINES = StatusController.JOURNAL_LINES
         window.status.JOURNAL_TIMEOUT = StatusController.JOURNAL_TIMEOUT
-        with mock.patch("wayvoice.ui.diagnostics.service.systemd_available", return_value=True), mock.patch("wayvoice.ui.controllers.status.subprocess.run",
+        with mock.patch("wayvoice.ui.diagnostics.service.systemd_available", return_value=True), mock.patch("wayvoice.ui.diagnostics.subprocess.run",
                         return_value=FakeProcess(1, stderr="boom")):
             from subprocess import SubprocessError
 

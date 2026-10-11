@@ -28,8 +28,16 @@ fi
 problems=0
 
 if ! output="$("$wayvoice_cmd" apply-shortcut 2>&1)"; then
-    printf 'setup-user: could not apply the global shortcut: %s\n' "$output" >&2
-    problems=$((problems + 1))
+    case ":${XDG_CURRENT_DESKTOP:-}:" in
+        *:GNOME:*)
+            printf 'setup-user: could not apply the global shortcut: %s\n' "$output" >&2
+            problems=$((problems + 1))
+            ;;
+        *)
+            # Plasma/wlroots own their bindings. Manual setup is expected here.
+            printf 'setup-user: configure the shortcut in desktop settings: %s\n' "$output"
+            ;;
+    esac
 fi
 
 # ydotool may be installed later from backports.
@@ -41,7 +49,7 @@ if command -v ydotoold >/dev/null 2>&1; then
 fi
 
 if [ "$problems" -gt 0 ]; then
-    printf 'setup-user: %s step(s) did not complete; WayVoice will not react to the hotkey\n' "$problems" >&2
+    printf 'setup-user: %s step(s) did not complete; check the reported integration problems\n' "$problems" >&2
     exit 1
 fi
 exit 0

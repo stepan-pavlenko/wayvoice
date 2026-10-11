@@ -21,8 +21,8 @@ class UiState:
 
     def duration_label(self, seconds):
         if seconds < 60:
-            return f'{seconds} s'
-        return f'{seconds // 60} min' if self.ui_lang == 'en' else f'{seconds // 60} мин'
+            return self.t('unit.seconds', value=seconds)
+        return self.t('unit.minutes', value=seconds // 60)
 
 
 @dataclass

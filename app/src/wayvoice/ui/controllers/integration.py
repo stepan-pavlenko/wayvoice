@@ -204,16 +204,9 @@ class IntegrationController:
         self._refresh_dependency_rows(force=True)
         # The package manager blocks and pkexec shows an authorization dialog, so the
         # work runs off the UI thread and comes back through GLib.idle_add.
-        self.ctx.tasks.run(lambda: self._install_dependency_worker(dep_id, packages),
-                           lambda _: None,
+        self.ctx.tasks.run(lambda: pkgsys.install_packages(packages, language=self.ctx.state.ui_lang),
+                           lambda result: self._install_dependency_done(dep_id, *result),
                            lambda exc: self._install_dependency_done(dep_id, False, str(exc)))
-
-    def _install_dependency_worker(self, dep_id: str, packages: list[str]):
-        try:
-            ok, message = pkgsys.install_packages(packages, language=self.ctx.state.ui_lang)
-        except Exception as exc:  # never let a worker kill the process
-            ok, message = False, str(exc)
-        self.ctx.tasks.idle(self._install_dependency_done, dep_id, ok, message)
 
     def _install_dependency_done(self, dep_id: str, ok: bool, message: str):
         self._dep_installing.discard(dep_id)

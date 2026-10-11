@@ -2,7 +2,6 @@
 from ..setup_presentation import model_missing, paint_setup
 import platform
 import os
-import subprocess
 import time
 
 import gi
@@ -25,7 +24,7 @@ from ...config import load_config, number
 from ...engine import engine_from_config, engine_label
 from ...i18n import tr
 from ...models import display_name
-from ...shortcut import label_for, shortcut_support, manual_command
+from ...shortcut import label_for, shortcut_support, manual_command, portal_shortcut_desktop
 
 
 class StatusController:
@@ -123,7 +122,18 @@ class StatusController:
         if self._shortcut_probe_at is None or now - self._shortcut_probe_at >= 5:
             self._shortcut_support = shortcut_support(self.ctx.state.ui_lang)
             self._shortcut_probe_at = now
-        reply['shortcut_support'] = self._shortcut_support
+        portal = reply.get('shortcut_portal')
+        if portal is not None:
+            active = portal.get('state') == 'active' and bool(portal.get('trigger'))
+            detail = (self.ctx.state.t('shortcut.portal.active', binding=portal['trigger']) if active
+                      else portal.get('error') or self.ctx.state.t('shortcut.portal.choose'))
+            reply['shortcut_support'] = (active, detail)
+            reply['shortcut'] = portal.get('trigger') or self.ctx.state.t('shortcut.disabled')
+        elif portal_shortcut_desktop():
+            reply['shortcut_support'] = (False, self.ctx.state.t('shortcut.portal.hint'))
+            reply['shortcut'] = self.ctx.state.t('shortcut.disabled')
+        else:
+            reply['shortcut_support'] = self._shortcut_support
         return (reply, load_config(), self.ctx.integration._missing_required())
 
     RESTART_LIMIT = 3
@@ -239,11 +249,17 @@ class StatusController:
         text = str(reply.get("last_text") or "")
         shortcut = str(reply.get("shortcut") or label_for(str(cfg.get("shortcut", "F8"))))
         self.ctx.home.hotkey_label.set_text(shortcut)
+        if reply.get('shortcut_portal') is not None or portal_shortcut_desktop():
+            portal = reply.get('shortcut_portal') or {}
+            self.ctx.settings.shortcut_row.set_subtitle(portal.get('error') or shortcut)
         support = reply.get('shortcut_support')
         if support is not None and hasattr(self.ctx.home, 'shortcut_support'):
             supported, message = support
             self.ctx.home.shortcut_support.set_text(message)
-            self.ctx.home.shortcut_manual.set_text('' if supported else manual_command())
+            portal = reply.get('shortcut_portal') or {}
+            needs_manual = not supported and (not portal_shortcut_desktop() or
+                                               portal.get('state') in {'error', 'unavailable'})
+            self.ctx.home.shortcut_manual.set_text(manual_command() if needs_manual else '')
 
         if recording:
             state = "recording"

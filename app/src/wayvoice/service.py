@@ -16,9 +16,13 @@ failures.
 
 from __future__ import annotations
 
+import json
 import os
+import select
 import shutil
 import signal
+import socket
+import struct
 import subprocess
 import sys
 import time
@@ -224,8 +228,7 @@ def _start_daemon_locked(wait: float = 5.0) -> bool:
 def _is_daemon_process(pid: int) -> bool:
     """Return whether ``pid`` is started as ``python -m wayvoice.daemon``.
 
-    pids get recycled, so the command line is verified before anything is signalled,
-    and only the exact ``-m wayvoice.daemon`` form counts - the module name alone would
+    This rejects unrelated socket servers before opening a process handle. Only the exact ``-m wayvoice.daemon`` form counts - the module name alone would
     also match an interactive run of the same module.
     """
     try:
@@ -236,39 +239,58 @@ def _is_daemon_process(pid: int) -> bool:
     return len(argv) == 3 and argv[1] == "-m" and argv[2] == DAEMON_MODULE
 
 
-def _daemon_pids() -> list[int]:
-    """Return the pids of the running WayVoice daemons."""
-    pids = []
-    for entry in Path("/proc").iterdir():
-        if entry.name.isdigit() and _is_daemon_process(int(entry.name)):
-            pids.append(int(entry.name))
-    return pids
+def _daemon_pidfd() -> int | None:
+    """Pin only the owner of our runtime socket; never enumerate other daemons.
 
-
-def _force_stop_daemon() -> bool:
-    """Terminate a daemon that ignored ``quit``; best effort.
-
-    SIGTERM is the expected path: the daemon handles it by asking its own loop to stop,
-    which is what stops the recorder and removes the socket. SIGKILL is the escalation
-    for a daemon wedged past its handler, and a recorder that outlives it is the cost of
-    running it in a session of its own.
+    A response on the same connection after pidfd_open proves the peer was still
+    alive when its handle was opened, excluding PID reuse before pidfd_open. The
+    descriptor itself prevents reuse from affecting later escalation. Unsupported
+    kernels and unresponsive peers fail closed: no process receives a signal.
     """
-    from .engine import _pid_alive
+    from .protocol import socket_path
 
-    stopped = False
-    for pid in _daemon_pids():
-        for sig in (signal.SIGTERM, signal.SIGKILL):
-            try:
-                os.kill(pid, sig)
-            except OSError:
-                break
-            stopped = True
-            deadline = time.monotonic() + 2.0
-            while _pid_alive(pid) and time.monotonic() < deadline:
-                time.sleep(POLL_INTERVAL)
-            if not _pid_alive(pid):
-                break
-    return stopped
+    descriptor = None
+    try:
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as peer:
+            peer.settimeout(0.3)
+            peer.connect(str(socket_path()))
+            pid, uid, _ = struct.unpack("3i", peer.getsockopt(
+                socket.SOL_SOCKET, socket.SO_PEERCRED, struct.calcsize("3i")))
+            if uid != os.getuid() or pid <= 0 or not _is_daemon_process(pid):
+                return None
+            descriptor = os.pidfd_open(pid)
+            peer.sendall(b"ping\n")
+            data = b""
+            while not data.endswith(b"\n") and len(data) < 65536:
+                chunk = peer.recv(4096)
+                if not chunk:
+                    break
+                data += chunk
+            if json.loads(data).get("ok"):
+                result, descriptor = descriptor, None
+                return result
+    except (OSError, AttributeError, ValueError):
+        pass
+    finally:
+        if descriptor is not None:
+            os.close(descriptor)
+    return None
+
+
+def _force_stop_daemon(descriptor: int | None) -> bool:
+    """Signal only the pinned socket peer, with bounded TERM/KILL escalation."""
+    if descriptor is None:
+        return False
+    for sig in (signal.SIGTERM, signal.SIGKILL):
+        if select.select([descriptor], [], [], 0)[0]:
+            return True
+        try:
+            signal.pidfd_send_signal(descriptor, sig)
+        except (OSError, AttributeError):
+            return False
+        if select.select([descriptor], [], [], 2.0)[0]:
+            return True
+    return False
 
 
 def restart_daemon(wait: float = 5.0) -> bool:
@@ -287,21 +309,27 @@ def restart_daemon(wait: float = 5.0) -> bool:
             if systemd_available():
                 return _systemd_daemon_ready("restart", wait)
             if daemon_socket_alive():
+                descriptor = _daemon_pidfd()
                 try:
-                    _request("quit", timeout=1.0)
-                except Exception:
-                    pass
-                deadline = time.monotonic() + QUIT_TIMEOUT
-                while time.monotonic() < deadline:
-                    if not daemon_socket_alive(timeout=0.2):
-                        break
-                    time.sleep(POLL_INTERVAL)
-                if daemon_socket_alive(timeout=0.2):
-                    print(
-                        "WayVoice: the daemon ignored the quit request; terminating it.",
-                        file=sys.stderr,
-                    )
-                    _force_stop_daemon()
+                    try:
+                        _request("quit", timeout=1.0)
+                    except Exception:
+                        pass
+                    deadline = time.monotonic() + QUIT_TIMEOUT
+                    while time.monotonic() < deadline:
+                        if not daemon_socket_alive(timeout=0.2):
+                            break
+                        time.sleep(POLL_INTERVAL)
+                    if daemon_socket_alive(timeout=0.2):
+                        print(
+                            "WayVoice: the daemon ignored the quit request; terminating it.",
+                            file=sys.stderr,
+                        )
+                        if not _force_stop_daemon(descriptor):
+                            return False
+                finally:
+                    if descriptor is not None:
+                        os.close(descriptor)
             return start_daemon(wait=wait)
         except Exception as exc:
             print(f"WayVoice: could not restart the daemon: {exc}", file=sys.stderr)

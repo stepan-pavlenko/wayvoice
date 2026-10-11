@@ -1,16 +1,24 @@
 from __future__ import annotations
 
+import json
 import locale
+from importlib.resources import files
 import warnings
 from typing import Any
 
 from . import languages
 
-SUPPORTED_UI_LANGUAGES = ("auto", "ru", "en")
+UI_LANGUAGE_NAMES = {
+    "ru": "Русский", "en": "English", "es": "Español", "pt": "Português",
+    "fr": "Français", "de": "Deutsch", "zh": "简体中文", "ja": "日本語",
+    "ar": "العربية", "hi": "हिन्दी",
+}
+SUPPORTED_UI_LANGUAGES = ("auto", *UI_LANGUAGE_NAMES)
 
 _RU = {
     "nav.home": "Главная",
     "nav.settings": "Настройки",
+    "menu.update": "Проверить обновления…",
     "menu.about": "О программе",
     "menu.diagnostics": "Скопировать диагностику",
     "menu.quit": "Выйти",
@@ -243,6 +251,7 @@ _RU = {
 _EN = {
     "nav.home": "Home",
     "nav.settings": "Settings",
+    "menu.update": "Check for updates…",
     "menu.about": "About WayVoice",
     "menu.diagnostics": "Copy diagnostics",
     "menu.quit": "Quit",
@@ -727,27 +736,224 @@ _EN.update({'indicator.title': 'WayVoice — indicator',
 _RU.update({"indicator.open_app": "Открыть WayVoice"})
 _EN.update({"indicator.open_app": "Open WayVoice"})
 
+_RU.update({"shortcut.kde_manual": "В KDE Plasma назначьте клавишу в Параметрах системы → Клавиатура → Комбинации клавиш → Добавить → Команда или сценарий. Команда: {command}. Выбор клавиши в WayVoice сохраняет желаемую комбинацию, но не регистрирует её в Plasma."})
+_EN.update({"shortcut.kde_manual": "In KDE Plasma, bind a key in System Settings → Keyboard → Shortcuts → Add New → Command or Script. Command: {command}. Choosing a key in WayVoice saves the desired binding but does not register it in Plasma."})
+
+_RU.update({'onboard.step': 'Шаг {number} из 4',
+ 'onboard.welcome': 'Добро пожаловать в WayVoice',
+ 'onboard.welcome_detail': 'Говорите — текст появится в вашем приложении. Распознавание работает '
+                           'на компьютере: записи не отправляются в облако.',
+ 'onboard.language': 'Язык интерфейса',
+ 'onboard.system': 'Как в системе',
+ 'onboard.language_detail': 'Язык речи определяется автоматически. Его можно изменить отдельно в '
+                            'настройках.',
+ 'onboard.continue': 'Продолжить',
+ 'onboard.back': 'Назад',
+ 'onboard.models': 'Выберите модель',
+ 'onboard.models_detail': 'Все три модели распознают разные языки и работают на CPU. Чем больше '
+                          'модель, тем больше нужно памяти и времени. Выбор можно изменить позже.',
+ 'onboard.tiny': 'Быстро · Tiny',
+ 'onboard.tiny_detail': 'Самая лёгкая модель. Для простых фраз; чаще ошибается на сложной речи.',
+ 'onboard.small': 'Баланс · Small',
+ 'onboard.small_detail': 'Рекомендуем для начала: баланс скорости и точности.',
+ 'onboard.medium': 'Точнее · Medium',
+ 'onboard.medium_detail': 'Для сложной речи. Требует больше памяти и работает медленнее.',
+ 'onboard.no_download': 'Выбор модели ничего не скачивает.',
+ 'onboard.prepare': 'Подготовим распознавание',
+ 'onboard.preparing': 'Подготовка распознавания',
+ 'onboard.network': 'По вашей команде WayVoice скачает недостающие компоненты и выбранную модель. '
+                    'Нужен интернет. После подготовки диктовка работает локально.',
+ 'onboard.size': 'Модель: примерно {size}. Компоненты скачиваются дополнительно.',
+ 'onboard.confirm': 'Начать сейчас или вернуться к этому позже?',
+ 'onboard.runtime': 'Подготовка компонентов…',
+ 'onboard.download': 'Загрузка модели…',
+ 'onboard.install': 'Скачать и подготовить',
+ 'onboard.close_detail': 'Отмена остановит эту загрузку. Подготовка компонентов, запущенная ранее, '
+                         'может продолжиться.',
+ 'onboard.cancel': 'Отмена',
+ 'onboard.defer': 'Настроить позже',
+ 'onboard.ready': 'Модель готова',
+ 'onboard.later': 'Продолжим позже',
+ 'onboard.ready_detail': 'Модель скачана. Осталось проверить горячую клавишу и попробовать первую '
+                         'диктовку.',
+ 'onboard.later_detail': 'Выбор сохранится. Диктовка станет доступна после подготовки компонентов '
+                         'и загрузки модели в настройках.',
+ 'onboard.shortcut': 'Проверьте и настройте горячую клавишу в настройках WayVoice.',
+ 'onboard.clipboard': 'Если автоматическая вставка недоступна, распознанный текст останется в '
+                      'буфере обмена для ручной вставки.',
+ 'onboard.open': 'Открыть WayVoice',
+ 'onboard.cancelled': 'Подготовка отменена. Можно повторить попытку или настроить позже.',
+ 'onboard.cancelling': 'Отмена…',
+ 'onboard.failed': 'Не удалось завершить: {reason}'})
+_EN.update({'onboard.step': 'Step {number} of 4',
+ 'onboard.welcome': 'Welcome to WayVoice',
+ 'onboard.welcome_detail': 'Speak and text appears in your application. Recognition runs on your '
+                           'computer; recordings are not sent to the cloud.',
+ 'onboard.language': 'Interface language',
+ 'onboard.system': 'System default',
+ 'onboard.language_detail': 'Speech language is detected automatically. You can change it '
+                            'separately in settings.',
+ 'onboard.continue': 'Continue',
+ 'onboard.back': 'Back',
+ 'onboard.models': 'Choose a model',
+ 'onboard.models_detail': 'All three models support multiple languages and run on CPU. Larger '
+                          'models need more memory and time. You can change your choice later.',
+ 'onboard.tiny': 'Fast · Tiny',
+ 'onboard.tiny_detail': 'The lightest model. For simple phrases; less reliable with complex '
+                        'speech.',
+ 'onboard.small': 'Balanced · Small',
+ 'onboard.small_detail': 'Recommended to start: a balance of speed and accuracy.',
+ 'onboard.medium': 'More accurate · Medium',
+ 'onboard.medium_detail': 'For complex speech. Uses more memory and takes longer.',
+ 'onboard.no_download': 'Selecting a model does not download anything.',
+ 'onboard.prepare': 'Prepare recognition',
+ 'onboard.preparing': 'Preparing recognition',
+ 'onboard.network': 'When you start, WayVoice downloads missing components and your selected '
+                    'model. Internet access is required. Afterwards, dictation works locally.',
+ 'onboard.size': 'Model: about {size}. Components are downloaded separately.',
+ 'onboard.confirm': 'Start now or come back later?',
+ 'onboard.runtime': 'Preparing components…',
+ 'onboard.download': 'Downloading model…',
+ 'onboard.install': 'Download and prepare',
+ 'onboard.close_detail': 'Cancel stops this download. Component preparation started earlier may '
+                         'continue.',
+ 'onboard.cancel': 'Cancel',
+ 'onboard.defer': 'Set up later',
+ 'onboard.ready': 'Model ready',
+ 'onboard.later': 'Continue later',
+ 'onboard.ready_detail': 'Your model is downloaded. Check your shortcut, then try your first '
+                         'dictation.',
+ 'onboard.later_detail': 'Your choice will be saved. Dictation becomes available after preparing '
+                         'components and downloading the model in settings.',
+ 'onboard.shortcut': 'Check and configure your shortcut in WayVoice settings.',
+ 'onboard.clipboard': 'If automatic paste is unavailable, recognized text stays in the clipboard '
+                      'for you to paste.',
+ 'onboard.open': 'Open WayVoice',
+ 'onboard.cancelled': 'Preparation cancelled. Retry or set up later.',
+ 'onboard.cancelling': 'Cancelling…',
+ 'onboard.failed': 'Could not complete: {reason}'})
+
+_RU.update({'onboard.kde_shortcut': 'В настройках WayVoice нажмите «Настроить в KDE» и выберите горячую клавишу в системном окне Plasma.',
+ 'indicator.window_actions': 'Действия окна',
+ 'indicator.window_actions_hint': 'Меню рабочего стола: выберите «Поверх остальных». '
+                                  'Перетаскивайте индикатор за состояние.',
+ 'indicator.details': 'Подробности',
+ 'indicator.window_actions_unavailable': 'Меню окна недоступно. В KDE используйте Alt+F3 → '
+                                         'Дополнительные действия → Поверх остальных.',
+ 'shortcut.portal.configure': 'Настроить в KDE',
+ 'shortcut.portal.choose': 'Выберите горячую клавишу в настройках KDE Plasma.',
+ 'shortcut.portal.unavailable': 'Системная настройка клавиши недоступна. Можно назначить команду '
+                                'WayVoice вручную.',
+ 'shortcut.portal.hint': 'Нажмите «Настроить в KDE» и назначьте клавишу в открывшихся системных '
+                         'настройках. WayVoice покажет фактическую комбинацию; она работает, пока '
+                         'запущен daemon, даже при закрытом окне.',
+ 'shortcut.portal.active': 'Назначено в KDE: {binding}'})
+_EN.update({'onboard.kde_shortcut': 'In WayVoice settings, click Configure in KDE and choose a shortcut in Plasma desktop settings.',
+ 'indicator.window_actions': 'Window actions',
+ 'indicator.window_actions_hint': 'Desktop window menu: choose Keep Above. Drag the indicator by '
+                                  'its status.',
+ 'indicator.details': 'Details',
+ 'indicator.window_actions_unavailable': 'Window menu unavailable. In KDE use Alt+F3 → More '
+                                         'Actions → Keep Above.',
+ 'shortcut.portal.configure': 'Configure in KDE',
+ 'shortcut.portal.choose': 'Choose a shortcut in KDE Plasma settings.',
+ 'shortcut.portal.unavailable': 'Desktop shortcut configuration is unavailable. You can bind the '
+                                'WayVoice command manually.',
+ 'shortcut.portal.hint': 'Click Configure in KDE and assign a key in the desktop settings. '
+                         'WayVoice shows the actual binding; it works while the daemon runs, even '
+                         'with this window closed.',
+ 'shortcut.portal.active': 'Assigned in KDE: {binding}'})
+
+_RU.update({'unit.seconds': '{value} с',
+ 'unit.minutes': '{value} мин',
+ 'update.title': 'Обновление WayVoice',
+ 'update.checking': 'Проверка GitHub Releases…',
+ 'update.available': 'Установлена {installed}. Доступна {available}.\n'
+                     'Установка откроется в терминале и потребует подтверждения. Завершите '
+                     'диктовку; службы будут перезапущены. После обновления закройте и откройте '
+                     'настройки.',
+ 'update.install': 'Установить…',
+ 'update.current': 'Установлена актуальная версия: {version}',
+ 'update.launcher_missing': 'Не найден запускатель wayvoice',
+ 'model.subtitle.tiny': 'Самая лёгкая · многоязычная',
+ 'model.subtitle.base': 'Быстрая · многоязычная',
+ 'model.subtitle.small': 'Баланс скорости и точности',
+ 'model.subtitle.medium': 'Точнее, но тяжелее',
+ 'model.subtitle.large-v3': 'Максимальная точность · многоязычная',
+ 'model.subtitle.turbo': 'Большая модель с упором на скорость',
+ 'model.subtitle.tiny.en': 'Английская · очень лёгкая',
+ 'model.subtitle.base.en': 'Английская · быстрая',
+ 'model.subtitle.small.en': 'Английская · хороший баланс',
+ 'model.subtitle.medium.en': 'Английская · высокая точность',
+ 'model.subtitle.distil-large-v3': 'Английская · ускоренная distilled-модель',
+ 'model.subtitle.bzikst/faster-whisper-large-v3-russian-int8': 'Дообучена на русской речи · '
+                                                               'community',
+ 'model.subtitle.tnfru/whisper-large-v3-german-ct2': 'Дообучена на немецкой речи · community',
+ 'model.subtitle.nekusu/faster-whisper-large-v3-turbo-latam-int8-ct2': 'Латиноамериканский '
+                                                                       'испанский · community',
+ 'model.subtitle.ele-sage/whisper-large-v3-turbo-fr-quebecois-ct2': 'Французский Квебека · '
+                                                                    'community',
+ 'model.subtitle.LocalAI-io/whisper-large-v3-it-yodas-only-ct2-int8': 'Дообучена на итальянской '
+                                                                      'речи · community',
+ 'model.subtitle.__custom__': 'Hugging Face repo ID или локальный путь'})
+_EN.update({'unit.seconds': '{value} s',
+ 'unit.minutes': '{value} min',
+ 'update.title': 'WayVoice update',
+ 'update.checking': 'Checking GitHub Releases…',
+ 'update.available': 'Installed: {installed}. Available: {available}.\n'
+                     'Installation opens in a terminal and asks for confirmation. Finish '
+                     'dictation; services will restart. Reopen settings afterwards.',
+ 'update.install': 'Install…',
+ 'update.current': 'Up to date: {version}',
+ 'update.launcher_missing': 'wayvoice launcher unavailable',
+ 'model.subtitle.tiny': 'Lightest · multilingual',
+ 'model.subtitle.base': 'Fast · multilingual',
+ 'model.subtitle.small': 'Balanced speed and accuracy',
+ 'model.subtitle.medium': 'More accurate, heavier',
+ 'model.subtitle.large-v3': 'Highest accuracy · multilingual',
+ 'model.subtitle.turbo': 'Large model optimized for speed',
+ 'model.subtitle.tiny.en': 'English-only · very light',
+ 'model.subtitle.base.en': 'English-only · fast',
+ 'model.subtitle.small.en': 'English-only · balanced',
+ 'model.subtitle.medium.en': 'English-only · high accuracy',
+ 'model.subtitle.distil-large-v3': 'English-only · distilled and faster',
+ 'model.subtitle.bzikst/faster-whisper-large-v3-russian-int8': 'Fine-tuned for Russian · '
+                                                               'community',
+ 'model.subtitle.tnfru/whisper-large-v3-german-ct2': 'Fine-tuned for German · community',
+ 'model.subtitle.nekusu/faster-whisper-large-v3-turbo-latam-int8-ct2': 'Latin American Spanish · '
+                                                                       'community',
+ 'model.subtitle.ele-sage/whisper-large-v3-turbo-fr-quebecois-ct2': 'Québec French · community',
+ 'model.subtitle.LocalAI-io/whisper-large-v3-it-yodas-only-ct2-int8': 'Fine-tuned for Italian · '
+                                                                      'community',
+ 'model.subtitle.__custom__': 'Hugging Face repo ID or local path'})
+
 _TRANSLATIONS = {"ru": _RU, "en": _EN}
+for _code in UI_LANGUAGE_NAMES:
+    if _code not in _TRANSLATIONS:
+        _TRANSLATIONS[_code] = json.loads(
+            files("wayvoice").joinpath("locales", _code + ".json").read_text(encoding="utf-8")
+        )
+
+
+def ui_language_labels(language: str | None = None) -> list[str]:
+    """Keep language names readable even when the current UI language is unfamiliar."""
+    return [tr("ui.auto", language), *UI_LANGUAGE_NAMES.values()]
+
 
 
 def resolve_language(value: str | None) -> str:
-    """Pick the interface language out of the configured value or the locale.
-
-    Only two interface translations exist, so this maps the whole recognition
-    language list of :mod:`wayvoice.languages` onto them: Russian gets the
-    Russian one and everything else falls back to English.  That is a choice
-    about *interface* text, not about what can be dictated - those are
-    independent, and a Ukrainian user can perfectly well want an English UI.
-    """
-    value = (value or languages.AUTO).strip().lower()
-    if value in _TRANSLATIONS:
-        return value
+    """Resolve an explicit or system UI locale independently of speech language."""
+    value = value.strip().lower() if isinstance(value, str) else languages.AUTO
+    normalized = languages.normalize(value)
+    if normalized in _TRANSLATIONS:
+        return normalized
     candidates: list[str] = [_locale_language(locale.getlocale)]
     if not candidates[0]:
         # Deprecated in 3.11 and gone by 3.15, but on the systems we support it
         # still answers where getlocale() has nothing to say.
         candidates.append(_locale_language(getattr(locale, "getdefaultlocale", None)))
-    return "ru" if languages.detect_from_locale(candidates) == "ru" else "en"
+    detected = languages.detect_from_locale(candidates)
+    return detected if detected in _TRANSLATIONS else "en"
 
 
 def _locale_language(getter) -> str:

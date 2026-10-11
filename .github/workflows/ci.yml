@@ -116,3 +116,21 @@ jobs:
       # gate, so local truth and CI truth are one file.
       - name: Check manifest structure
         run: python3 scripts/check-flatpak-manifest.py
+
+  gtk-tests:
+    name: GTK UI tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install GTK test environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends python3-gi gir1.2-gtk-4.0 gir1.2-adw-1 xvfb xauth dbus-x11
+      - name: Run UI tests with a real GTK display
+        env:
+          PYTHONPATH: app/src
+          GDK_BACKEND: x11
+        run: |
+          xvfb-run -a dbus-run-session -- /usr/bin/python3 -c 'import gi; gi.require_version("Gtk", "4.0"); gi.require_version("Adw", "1"); from gi.repository import Gtk, Adw; assert Gtk.init_check(); Adw.init()'
+          xvfb-run -a dbus-run-session -- /usr/bin/python3 -m unittest discover -s tests -t . -p 'test_ui*.py' -v

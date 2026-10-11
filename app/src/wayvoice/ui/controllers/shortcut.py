@@ -5,19 +5,58 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Gdk, Gtk
+from gi.repository import Gdk, Gtk, Adw
 
-from ...shortcut import label_for
+from ...shortcut import label_for, portal_shortcut_desktop
+from ... import service
+from ...cli import request
+from ...config import load_config, save_config, config_error
+from ..health_presentation import show_operation_error
 
 
 class ShortcutController:
     def __init__(self, context):
         self.ctx = context
+        self._configuring = False
 
 
     def _open_shortcut_capture(self, *_args):
+        if portal_shortcut_desktop():
+            self._configure_portal_shortcut()
+            return
         from ..dialogs.shortcut_window import shortcut_capture
         shortcut_capture(self.ctx.window, self.ctx.state.shortcut_binding, self.ctx.state.t, self._disable_shortcut, self._capture_shortcut_key)
+
+    def _configure_portal_shortcut(self):
+        if self._configuring:
+            return
+        self._configuring = True
+        self.ctx.settings.shortcut_button.set_sensitive(False)
+
+        def work():
+            if not service.start_daemon():
+                raise RuntimeError(self.ctx.state.t("health.daemon_unavailable"))
+            reply = request("configure-shortcut", timeout=2.0)
+            if not reply.get("ok"):
+                raise RuntimeError(reply.get("error") or self.ctx.state.t("shortcut.portal.unavailable"))
+            # Persist only opt-in, preserving the saved settings and the UI draft.
+            cfg = load_config()
+            if config_error():
+                raise RuntimeError(config_error())
+            cfg["shortcut_backend"] = "portal"
+            save_config(cfg)
+
+        self.ctx.preferences._queue_mutation(work, self._portal_configured, self._portal_failed)
+
+    def _portal_configured(self, _result):
+        self._configuring = False
+        self.ctx.settings.shortcut_button.set_sensitive(True)
+        self.ctx.window.toast.add_toast(Adw.Toast(title=self.ctx.state.t("shortcut.portal.choose")))
+
+    def _portal_failed(self, exc):
+        self._configuring = False
+        self.ctx.settings.shortcut_button.set_sensitive(True)
+        show_operation_error(self.ctx, exc)
 
     def _disable_shortcut(self, _button, win):
         self.ctx.state.shortcut_binding = ""

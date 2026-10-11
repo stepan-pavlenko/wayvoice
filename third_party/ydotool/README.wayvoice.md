@@ -15,7 +15,7 @@ the distribution's own copy is used and this one is never started: see
 
 ## What is here
 
-The upstream sources, unmodified:
+The upstream sources with the small downstream safety changes listed below:
 
 | Path | What |
 |---|---|
@@ -60,10 +60,18 @@ and when the settings window decides whether the dependency is missing.
 Not in the Flatpak. A daemon that writes to `/dev/uinput` has to run on the
 host, and inside a sandbox `/dev/uinput` is not mapped — the manifest documents
 that `--device=all` buys nothing for this reason. The Flatpak build therefore
-needs `ydotool` installed on the host, exactly as the daemon does.
+uses clipboard delivery and does not start this host helper.
 
 ## Updating
 
 Replace the files from a newer upstream revision, keep `LICENSE`, and record the
-revision above. No patches are applied to these sources, so a diff against
-upstream should be empty; if that stops being true, say so in this file.
+revision above. Reapply or retire the downstream safety changes below explicitly
+and review the resulting diff against upstream.
+
+## Downstream safety changes
+
+WayVoice bounds-checks the ASCII tables in `type` and `stdin`, ignoring non-ASCII
+bytes rather than indexing outside the table. The interactive stdin helper exits
+on EOF/read failure and uses `_exit` after restoring the terminal in its SIGINT
+handler. Ordinary WayVoice paste uses `key`; Unicode text travels through the
+clipboard. These changes do not add Unicode keyboard typing support.

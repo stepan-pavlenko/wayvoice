@@ -1,5 +1,6 @@
 from __future__ import annotations
 import json
+import math
 import sys
 import os
 from pathlib import Path
@@ -57,7 +58,7 @@ _LAST_ERROR = ""
 
 
 def config_error() -> str:
-    """Why the last :func:`load_config` fell back to defaults, or ``""``."""
+    """Why the last :func:`load_config` replaced unusable settings, or ``""``."""
     return _LAST_ERROR
 
 
@@ -71,7 +72,28 @@ def load_config() -> dict[str, Any]:
         try:
             loaded = json.loads(path.read_text(encoding="utf-8"))
             if isinstance(loaded, dict):
-                data.update({key: value for key, value in loaded.items() if key not in _RETIRED_KEYS})
+                invalid = []
+                for key, value in loaded.items():
+                    if key in _RETIRED_KEYS:
+                        continue
+                    if key in DEFAULTS:
+                        default = DEFAULTS[key]
+                        valid = isinstance(value, type(default))
+                        if isinstance(default, int) and not isinstance(default, bool):
+                            try:
+                                valid = not isinstance(value, bool) and math.isfinite(float(value))
+                                int(value)
+                            except (TypeError, ValueError, OverflowError):
+                                valid = False
+                        if not valid:
+                            invalid.append(key)
+                            continue
+                    data[key] = value
+                if invalid:
+                    _LAST_ERROR = (
+                        f"{path}: invalid setting values: {', '.join(invalid)}; "
+                        "using defaults for these keys"
+                    )
             else:
                 _LAST_ERROR = f"{path} does not contain an object"
         except Exception as exc:
@@ -100,7 +122,7 @@ def number(cfg: dict, key: str, default):
     """Read a numeric setting, falling back to ``default`` when it is not one.
 
     ``config.json`` is a file a person can edit and ``load_config`` copies it over
-    the defaults without looking at the types, so every conversion of a value from it
+    the defaults, and callers can also supply partial dictionaries, so conversion
     needs a floor. Without one, a single ``"beam_size": null`` raises somewhere deep
     in the engine - or, worse, in the settings window, where an exception during
     construction means no window at all, and an exception inside a GLib timeout means
@@ -113,10 +135,11 @@ def number(cfg: dict, key: str, default):
     try:
         if isinstance(default, bool):
             return bool(value)
-        if isinstance(default, int):
-            return int(value)
-        return float(value)
-    except (TypeError, ValueError):
+        result = int(value) if isinstance(default, int) else float(value)
+        if not math.isfinite(result):
+            raise ValueError("non-finite number")
+        return result
+    except (TypeError, ValueError, OverflowError):
         print(f"WayVoice: {key}={value!r} is not a number, using {default!r}",
               file=sys.stderr)
         return default

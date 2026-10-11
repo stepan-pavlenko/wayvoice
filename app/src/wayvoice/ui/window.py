@@ -5,6 +5,7 @@ gi.require_version('Adw', '1')
 from gi.repository import Adw, Gdk, Gio, Gtk
 from ..config import load_config
 from .async_tasks import TaskRunner
+from .localization import set_text_direction
 from .state import UiContext, UiState
 from .style import CSS
 from .pages.home import HomePage
@@ -15,6 +16,7 @@ from .controllers.integration import IntegrationController
 from .controllers.settings import SettingsController
 from .controllers.shortcut import ShortcutController
 from .controllers.status import StatusController
+from .dialogs.update import show_update
 from .dialogs.about import show_about
 from .dialogs.help import show_help
 from .widgets.labels import clip_subtitle
@@ -27,6 +29,7 @@ class WayVoiceWindow(Adw.ApplicationWindow):
         self.set_default_size(780, 760)
         self.set_size_request(420, 360)
         self.state = UiState(load_config())
+        set_text_direction(self, self.state.ui_lang)
         self.tasks = TaskRunner()
         self._close_pending = False
         self._quit_pending = False
@@ -41,7 +44,7 @@ class WayVoiceWindow(Adw.ApplicationWindow):
         self.home = HomePage(ctx)
         self.settings = SettingsPage(ctx)
         self._install_css()
-        for name, callback in (('indicator', self._show_indicator), ('help', self._show_help), ('about', self._show_about), ('diagnostics', ctx.status._copy_diagnostics), ('quit', self._quit)):
+        for name, callback in (('update', lambda *_: show_update(self)), ('indicator', self._show_indicator), ('help', self._show_help), ('about', self._show_about), ('diagnostics', ctx.status._copy_diagnostics), ('quit', self._quit)):
             action = Gio.SimpleAction.new(name, None)
             action.connect('activate', callback)
             self.add_action(action)
@@ -56,7 +59,7 @@ class WayVoiceWindow(Adw.ApplicationWindow):
         header.set_title_widget(switcher)
         menu_button = Gtk.MenuButton(icon_name='open-menu-symbolic', tooltip_text=self.t('nav.settings'))
         menu = Gio.Menu()
-        for label, action in (('indicator.open', 'indicator'), ('menu.help', 'help'), ('menu.diagnostics', 'diagnostics'), ('menu.about', 'about'), ('menu.close_settings', 'quit')):
+        for label, action in (('menu.update', 'update'), ('indicator.open', 'indicator'), ('menu.help', 'help'), ('menu.diagnostics', 'diagnostics'), ('menu.about', 'about'), ('menu.close_settings', 'quit')):
             menu.append(self.t(label), f'win.{action}')
         menu_button.set_menu_model(menu)
         header.pack_end(menu_button)

@@ -3,6 +3,8 @@ import sys
 from gi.repository import Adw, Gio, GLib
 from .window import WayVoiceWindow
 from .indicator import IndicatorWindow
+from .onboarding import OnboardingWindow
+from ..onboarding import needs_onboarding
 
 
 class App(Adw.Application):
@@ -12,10 +14,16 @@ class App(Adw.Application):
                              'Open the compact status indicator', None)
 
     def do_activate(self):
-        win = next((w for w in self.get_windows() if isinstance(w, WayVoiceWindow)), None)
+        win = next((w for w in self.get_windows() if isinstance(w, (WayVoiceWindow, OnboardingWindow))), None)
         if not win:
-            win = WayVoiceWindow(self)
+            win = OnboardingWindow(self, self._onboarding_finished) if needs_onboarding() else WayVoiceWindow(self)
         win.present()
+
+    def _onboarding_finished(self, wizard):
+        replacement = WayVoiceWindow(self)
+        wizard._dispose_ui()
+        wizard.destroy()
+        replacement.present()
 
     def do_command_line(self, command_line):
         if command_line.get_options_dict().contains('indicator'):
@@ -39,7 +47,7 @@ class App(Adw.Application):
 
     def do_shutdown(self):
         for window in self.get_windows():
-            if isinstance(window, (WayVoiceWindow, IndicatorWindow)):
+            if isinstance(window, (WayVoiceWindow, IndicatorWindow, OnboardingWindow)):
                 window._dispose_ui()
         Adw.Application.do_shutdown(self)
 
