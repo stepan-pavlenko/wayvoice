@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.10 — 2026-10-11
+
+- Removed empty shortcut hints and reduced spacing in the dictation card.
+- Made first-dictation guidance collapsible; it folds once after recognized text and respects manual reopening.
+- Updated Linux package descriptions and added English screenshots to AppStream metadata.
+- Prevented native package updates from overlapping Faster-Whisper runtime preparation, including direct setup requests and daemon startup.
+
 ## 0.6.9 — 2026-10-11
 
 - Added first-run setup for interface language and a local model, with explicit preparation, cancellation, retry and deferral.
