@@ -45,6 +45,11 @@ class HomePage:
         self.status_pill.set_valign(Gtk.Align.CENTER)
         intro.append(self.status_pill)
         outer.append(intro)
+        self.update_banner = Adw.Banner(title="", button_label=self.ctx.state.t("update.open"))
+        self.update_banner.set_revealed(False)
+        self.update_banner.set_visible(False)
+        self.update_banner.connect("button-clicked", lambda *_: self.ctx.window.activate_action("win.update", None))
+        outer.append(self.update_banner)
 
         hero = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=13)
         hero.add_css_class("hero-card")

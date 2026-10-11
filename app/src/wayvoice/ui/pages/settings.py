@@ -272,6 +272,10 @@ class SettingsPage:
         self.ui_language.set_model(Gtk.StringList.new(ui_language_labels(self.ctx.state.ui_lang)))
         self.ui_language.set_selected(index_or_zero(UI_LANGUAGE_IDS, self.ctx.state.ui_lang_setting))
         interface_group.add(self.ui_language)
+        self.auto_check_updates = Adw.SwitchRow(
+            title=self.ctx.state.t("update.auto"), subtitle=self.ctx.state.t("update.auto_hint"))
+        self.auto_check_updates.set_active(self.ctx.state.cfg.get("auto_check_updates") is True)
+        interface_group.add(self.auto_check_updates)
 
         diag_group = Adw.PreferencesGroup(title=self.ctx.state.t("settings.diagnostics"))
         page.add(diag_group)

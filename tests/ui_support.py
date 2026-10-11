@@ -42,6 +42,8 @@ def controller_context():
     ctx.settings = SimpleNamespace(shortcut_row=mock.Mock(), shortcut_button=mock.Mock())
     ctx.settings.shortcut_mode = mock.Mock()
     ctx.settings.shortcut_mode.get_selected.return_value = 0
+    ctx.settings.auto_check_updates = mock.Mock()
+    ctx.settings.auto_check_updates.get_active.return_value = False
     ctx.models = ModelsController(ctx)
     ctx.preferences = SettingsController(ctx)
     ctx.integration = IntegrationController(ctx)

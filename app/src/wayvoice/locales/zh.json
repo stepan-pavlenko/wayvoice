@@ -426,5 +426,9 @@
   "shortcut.mode_hold": "按住说话（PTT）",
   "shortcut.hold_hint": "说话时按住快捷键，松开后转写。麦克风按钮仍通过点击开始或停止。",
   "shortcut.hold_unavailable": "此快捷键后端不报告按键释放。PTT 需要桌面分别执行按下和释放命令。",
-  "shortcut.hold_recording": "松开快捷键以转写。"
+  "shortcut.hold_recording": "松开快捷键以转写。",
+  "update.auto": "自动检查更新",
+  "update.auto_hint": "打开界面时检查 GitHub，之后每 6 小时检查一次，仅在界面打开时进行。不会自动下载或安装。",
+  "update.notice": "WayVoice {version} 已发布",
+  "update.open": "更新…"
 }

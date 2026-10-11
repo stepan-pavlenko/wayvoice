@@ -426,5 +426,9 @@
   "shortcut.mode_hold": "Mantener pulsado para hablar (PTT)",
   "shortcut.hold_hint": "Mantén el atajo mientras hablas. Suéltalo para transcribir. El botón del micrófono funciona con clics.",
   "shortcut.hold_unavailable": "Este sistema de atajos no informa al soltar la tecla. PTT requiere comandos del escritorio para pulsar y soltar.",
-  "shortcut.hold_recording": "Suelta el atajo para transcribir."
+  "shortcut.hold_recording": "Suelta el atajo para transcribir.",
+  "update.auto": "Buscar actualizaciones automáticamente",
+  "update.auto_hint": "Consultar GitHub al abrir y cada 6 horas mientras la interfaz esté abierta. Sin descargas ni instalación automáticas.",
+  "update.notice": "WayVoice {version} está disponible",
+  "update.open": "Actualizar…"
 }

@@ -426,5 +426,9 @@
   "shortcut.mode_hold": "Segurar para falar (PTT)",
   "shortcut.hold_hint": "Segure o atalho enquanto fala. Solte para transcrever. O botão do microfone continua funcionando por cliques.",
   "shortcut.hold_unavailable": "Este sistema de atalhos não informa quando a tecla é solta. PTT exige comandos do desktop para pressionar e soltar.",
-  "shortcut.hold_recording": "Solte o atalho para transcrever."
+  "shortcut.hold_recording": "Solte o atalho para transcrever.",
+  "update.auto": "Verificar atualizações automaticamente",
+  "update.auto_hint": "Consultar o GitHub ao abrir e a cada 6 horas enquanto a interface estiver aberta. Sem downloads ou instalação automáticos.",
+  "update.notice": "WayVoice {version} está disponível",
+  "update.open": "Atualizar…"
 }

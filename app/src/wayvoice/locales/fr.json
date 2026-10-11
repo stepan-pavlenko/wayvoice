@@ -426,5 +426,9 @@
   "shortcut.mode_hold": "Maintenir pour parler (PTT)",
   "shortcut.hold_hint": "Maintenez le raccourci en parlant. Relâchez pour transcrire. Le bouton du microphone fonctionne toujours par clics.",
   "shortcut.hold_unavailable": "Ce système de raccourcis ne signale pas le relâchement. PTT nécessite des commandes du bureau pour appuyer et relâcher.",
-  "shortcut.hold_recording": "Relâchez le raccourci pour transcrire."
+  "shortcut.hold_recording": "Relâchez le raccourci pour transcrire.",
+  "update.auto": "Rechercher automatiquement les mises à jour",
+  "update.auto_hint": "Consulter GitHub à l’ouverture puis toutes les 6 heures tant que l’interface est ouverte. Aucun téléchargement ni installation automatique.",
+  "update.notice": "WayVoice {version} est disponible",
+  "update.open": "Mettre à jour…"
 }

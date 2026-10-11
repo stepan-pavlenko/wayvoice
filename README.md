@@ -12,7 +12,7 @@ WayVoice uses GTK 4 and libadwaita, records through PipeWire, and supports Faste
 
 **Status:** alpha. GNOME Wayland is the primary tested desktop. KDE Plasma integration is implemented, but complete installed dictation and paste checks are still pending. wlroots desktops and installed Flatpak builds also need testing.
 
-The current version is **0.6.11**. Download packages from [GitHub Releases](https://github.com/pavlenkosa/wayvoice/releases).
+The current release is **0.6.11**. This branch also includes unreleased changes listed in the changelog. Download published packages from [GitHub Releases](https://github.com/pavlenkosa/wayvoice/releases).
 
 ## Push-to-talk
 
@@ -178,6 +178,11 @@ wayvoice model --cancel    # Cancel its download
 
 ## Updating
 
+You can enable **Automatically check for updates** in Settings and save the change.
+WayVoice then checks GitHub when you open the interface and every six hours while
+it remains open. A notice on Home shows a newer release with an **Update…** button.
+Automatic checks are off by default and do not download or install packages.
+
 Install a newer DEB or RPM using the same package-manager command as above. Native package upgrades restart the background services.
 
 On builds that include the updater, choose **Check for updates…** from the menu, or run:
@@ -193,7 +198,7 @@ The updater requires a compatible running daemon. Older installations need a man
 
 ## Privacy
 
-Faster-Whisper and whisper.cpp process recordings locally. Network access is used for downloads you request, plus explicit update checks and package downloads from GitHub. A custom recognition command may have its own network behavior.
+Faster-Whisper and whisper.cpp process recordings locally. Network access is used for downloads you request, plus update checks and package downloads from GitHub. Optional automatic checks contact GitHub while the interface is open; they do not send recordings. A custom recognition command may have its own network behavior.
 
 Temporary recordings are removed after processing or cancellation. Dictation text is hidden in desktop notifications by default. Clipboard managers and other applications may retain clipboard text according to your desktop settings.
 

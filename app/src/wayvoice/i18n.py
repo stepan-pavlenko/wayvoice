@@ -944,6 +944,17 @@ _EN.update({'shortcut.mode': 'Shortcut mode',
 _RU.update({'shortcut.hold_recording': 'Отпустите горячую клавишу для распознавания.'})
 _EN.update({'shortcut.hold_recording': 'Release the shortcut to transcribe.'})
 
+_RU.update({'update.auto': 'Автоматически проверять обновления',
+ 'update.auto_hint': 'Проверять GitHub при открытии и раз в 6 часов, пока интерфейс открыт. Без '
+                     'автоматического скачивания и установки.',
+ 'update.notice': 'Доступна WayVoice {version}',
+ 'update.open': 'Обновить…'})
+_EN.update({'update.auto': 'Automatically check for updates',
+ 'update.auto_hint': 'Check GitHub on opening and every 6 hours while the interface is open. No '
+                     'automatic downloads or installation.',
+ 'update.notice': 'WayVoice {version} is available',
+ 'update.open': 'Update…'})
+
 _TRANSLATIONS = {"ru": _RU, "en": _EN}
 
 _RU.update({'update.external': 'Обновите эту установку через пакетный менеджер или Flatpak. Обновление в '

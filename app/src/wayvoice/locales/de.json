@@ -426,5 +426,9 @@
   "shortcut.mode_hold": "Zum Sprechen gedrückt halten (PTT)",
   "shortcut.hold_hint": "Beim Sprechen das Tastenkürzel gedrückt halten. Zum Transkribieren loslassen. Die Mikrofontaste funktioniert weiterhin per Klick.",
   "shortcut.hold_unavailable": "Dieses Kürzelsystem meldet das Loslassen nicht. PTT benötigt Desktop-Befehle für Drücken und Loslassen.",
-  "shortcut.hold_recording": "Zum Transkribieren das Tastenkürzel loslassen."
+  "shortcut.hold_recording": "Zum Transkribieren das Tastenkürzel loslassen.",
+  "update.auto": "Automatisch nach Updates suchen",
+  "update.auto_hint": "GitHub beim Öffnen und alle 6 Stunden prüfen, solange die Oberfläche geöffnet ist. Keine automatischen Downloads oder Installationen.",
+  "update.notice": "WayVoice {version} ist verfügbar",
+  "update.open": "Aktualisieren…"
 }
