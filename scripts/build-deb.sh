@@ -86,9 +86,9 @@ Maintainer: WayVoice Project <noreply@localhost>
 License: AGPL-3.0-or-later
 Depends: init-system-helpers (>= 1.66), python3 (>= 3.11), python3-venv, python3-gi, gir1.2-gtk-4.0, gir1.2-adw-1, libadwaita-1-0, pipewire-bin, wl-clipboard, libnotify-bin
 Recommends: ydotool
-Description: local speech-to-text dictation for GNOME and Wayland
- WayVoice is a GTK4/libadwaita background dictation utility for GNOME on
- Wayland. It records microphone audio through PipeWire, supports multiple
+Description: local voice input for Linux
+ WayVoice is a GTK4/libadwaita background dictation utility for Linux.
+ It records microphone audio through PipeWire, supports multiple
  local recognition engines, normalizes punctuation and inserts recognized text
  into the currently focused application.
 EOF

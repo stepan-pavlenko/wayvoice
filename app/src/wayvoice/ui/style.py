@@ -8,7 +8,7 @@ CSS = r"""
   border: 1px solid alpha(@window_fg_color, 0.08);
   border-radius: 22px;
 }
-.hero-card { padding: 30px; }
+.hero-card { padding: 24px; }
 .surface-card { padding: 18px; }
 .transcript-card, .health-card { padding: 18px 20px; }
 .hero-title { font-size: 1.5em; font-weight: 800; }

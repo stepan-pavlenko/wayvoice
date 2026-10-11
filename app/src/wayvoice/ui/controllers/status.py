@@ -256,10 +256,12 @@ class StatusController:
         if support is not None and hasattr(self.ctx.home, 'shortcut_support'):
             supported, message = support
             self.ctx.home.shortcut_support.set_text(message)
+            self.ctx.home.shortcut_support.set_visible(bool(message))
             portal = reply.get('shortcut_portal') or {}
             needs_manual = not supported and (not portal_shortcut_desktop() or
                                                portal.get('state') in {'error', 'unavailable'})
             self.ctx.home.shortcut_manual.set_text(manual_command() if needs_manual else '')
+            self.ctx.home.shortcut_manual.set_visible(needs_manual)
 
         if recording:
             state = "recording"
