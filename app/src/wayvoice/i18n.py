@@ -187,8 +187,8 @@ _RU = {
     "pkgsys.package_skipped": "Не установлено — нет пакета в репозиториях: {packages}.",
     "pkgsys.install_busy": "Другая установка уже идёт. Дождитесь её окончания.",
     "pkgsys.no_packages": "Неизвестно, какой пакет установить. Установите зависимость вручную.",
-    "injector.clipboard_error": "Не удалось открыть буфер Wayland: {error}",
-    "injector.clipboard_write": "Не удалось записать текст в буфер Wayland.",
+    "injector.clipboard_error": "Не удалось открыть буфер обмена: {error}",
+    "injector.clipboard_write": "Не удалось записать текст в буфер обмена.",
     "injector.ydotool_missing": "Автовставка недоступна: {detail} Текст оставлен в буфере обмена.",
     "injector.ydotool_timeout": "ydotool не ответил. Текст оставлен в буфере обмена.",
     "injector.ydotool_failed": "Автовставка не сработала: {reason}. Текст оставлен в буфере обмена.",
@@ -215,7 +215,7 @@ _RU = {
     "cli.engine_needs_no_setup": "{engine} не требует подготовки.",
     "cli.usage": "Использование: wayvoice {commands}",
     "cli.model_choose_in_settings": "Модель выбирается в окне настроек; скачивается та, что выбрана.",
-    "about.comments": "Локальная голосовая диктовка для GNOME и Wayland.",
+    "about.comments": 'Локальный голосовой ввод для Linux.',
     "about.developer": "WayVoice contributors",
     "ui.auto": "Системный",
     "ui.russian": "Русский",
@@ -420,8 +420,8 @@ _EN = {
     "pkgsys.package_skipped": "Not installed, no such package in the repositories: {packages}.",
     "pkgsys.install_busy": "Another installation is already running. Wait for it to finish.",
     "pkgsys.no_packages": "Unknown which package to install. Install the dependency manually.",
-    "injector.clipboard_error": "Could not open the Wayland clipboard: {error}",
-    "injector.clipboard_write": "Could not write the text into the Wayland clipboard.",
+    "injector.clipboard_error": "Could not open the clipboard: {error}",
+    "injector.clipboard_write": "Could not write the text into the clipboard.",
     "injector.ydotool_missing": "Auto-paste unavailable: {detail} The text stays in the clipboard.",
     "injector.ydotool_timeout": "ydotool did not respond. The text stays in the clipboard.",
     "injector.ydotool_failed": "Auto-paste failed: {reason}. The text stays in the clipboard.",
@@ -448,7 +448,7 @@ _EN = {
     "cli.engine_needs_no_setup": "{engine} needs no preparation.",
     "cli.usage": "Usage: wayvoice {commands}",
     "cli.model_choose_in_settings": "The model is chosen in the settings window; the chosen one is downloaded.",
-    "about.comments": "Local voice dictation for GNOME and Wayland.",
+    "about.comments": 'Local voice dictation for Linux.',
     "about.developer": "WayVoice contributors",
     "ui.auto": "System",
     "ui.russian": "Русский",
@@ -534,8 +534,8 @@ _RU.update({'store.download_recovery': 'Проверьте соединение 
  'store.worker_stop_failed': 'Не удалось безопасно выгрузить модель. Удаление отменено.',
  'shortcut.manual_required': 'Автоматическая регистрация здесь недоступна. Назначьте клавишу для команды: '
                              '{command}',
- 'shortcut.backend_unavailable': 'Служба клавиш GNOME недоступна. Настройте вручную: {command}',
- 'shortcut.gnome_configured': 'Настроено для GNOME. Проверьте клавишу из другого приложения.',
+ 'shortcut.backend_unavailable': 'Служба горячих клавиш недоступна. Настройте вручную: {command}',
+ 'shortcut.gnome_configured': 'Клавиша настроена. Проверьте её из другого приложения.',
  'shortcut.apply_failed': 'Клавиша не настроена: {error}. Ручная команда: {command}',
  'diagnostics.preview_title': 'Проверить диагностику',
  'diagnostics.preview_notice': 'Отчёт содержит сведения о системе, движке и настроенных путях. Журналы могут '
@@ -599,8 +599,8 @@ _EN.update({'store.download_recovery': 'Check the connection and free disk space
  'store.maintenance_busy': 'Finish recording, recognition or model preparation first.',
  'store.worker_stop_failed': 'The model could not be safely unloaded. Deletion was cancelled.',
  'shortcut.manual_required': 'Automatic registration is unavailable here. Bind a shortcut to: {command}',
- 'shortcut.backend_unavailable': 'The GNOME shortcut service is unavailable. Configure manually: {command}',
- 'shortcut.gnome_configured': 'Configured for GNOME. Test the shortcut from another application.',
+ 'shortcut.backend_unavailable': 'The shortcut service is unavailable. Configure manually: {command}',
+ 'shortcut.gnome_configured': 'Shortcut configured. Test it from another application.',
  'shortcut.apply_failed': 'Shortcut setup failed: {error}. Manual command: {command}',
  'diagnostics.preview_title': 'Review diagnostics',
  'diagnostics.preview_notice': 'The report contains system, engine and configured-path details. Logs may '
@@ -631,8 +631,7 @@ _RU.update({'setup.title': 'Перед первой диктовкой',
  'setup.clipboard_available': 'wl-copy найден; вставку в нужное приложение проверьте горячей '
                               'клавишей',
  'setup.shortcut_disabled': 'Горячая клавиша отключена',
- 'setup.shortcut_configured': 'GNOME поддерживает настройку; сохраните клавишу и проверьте её в '
-                              'другом приложении',
+ 'setup.shortcut_configured': 'Настройка доступна; сохраните клавишу и проверьте её в другом приложении',
  'setup.shortcut_manual': 'Требуется ручная привязка команды в окружении рабочего стола',
  'setup.model_next': 'Откройте шаг «Модель» ниже и скачайте файлы.',
  'menu.help': 'Помощь и обновления',
@@ -667,8 +666,7 @@ _EN.update({'setup.title': 'Before your first dictation',
  'setup.clipboard_missing': 'wl-copy missing — install wl-clipboard in dependencies',
  'setup.clipboard_available': 'wl-copy found; test pasting into your application with the shortcut',
  'setup.shortcut_disabled': 'Shortcut disabled',
- 'setup.shortcut_configured': 'GNOME supports configuration; save the shortcut and test it in '
-                              'another application',
+ 'setup.shortcut_configured': 'Configuration is available; save the shortcut and test it in another application',
  'setup.shortcut_manual': 'Bind the command manually in your desktop settings',
  'setup.model_next': 'Open the Model step below and download the files.',
  'menu.help': 'Help and updates',
@@ -927,6 +925,24 @@ _EN.update({'unit.seconds': '{value} s',
  'model.subtitle.LocalAI-io/whisper-large-v3-it-yodas-only-ct2-int8': 'Fine-tuned for Italian · '
                                                                       'community',
  'model.subtitle.__custom__': 'Hugging Face repo ID or local path'})
+
+_RU.update({'shortcut.mode': 'Режим горячей клавиши',
+ 'shortcut.mode_toggle': 'Нажать для начала и остановки',
+ 'shortcut.mode_hold': 'Удерживать для записи (PTT)',
+ 'shortcut.hold_hint': 'Удерживайте клавишу во время записи. Отпустите для распознавания. Кнопка '
+                       'микрофона работает по нажатию.',
+ 'shortcut.hold_unavailable': 'Текущий способ привязки не передаёт отпускание клавиши. Для PTT '
+                              'нужны системные команды на нажатие и отпускание.'})
+_EN.update({'shortcut.mode': 'Shortcut mode',
+ 'shortcut.mode_toggle': 'Press to start and stop',
+ 'shortcut.mode_hold': 'Hold to talk (PTT)',
+ 'shortcut.hold_hint': 'Hold the shortcut while speaking. Release to transcribe. The microphone '
+                       'button remains click-to-toggle.',
+ 'shortcut.hold_unavailable': 'This shortcut backend does not report key release. PTT requires '
+                              'desktop commands for both press and release.'})
+
+_RU.update({'shortcut.hold_recording': 'Отпустите горячую клавишу для распознавания.'})
+_EN.update({'shortcut.hold_recording': 'Release the shortcut to transcribe.'})
 
 _TRANSLATIONS = {"ru": _RU, "en": _EN}
 

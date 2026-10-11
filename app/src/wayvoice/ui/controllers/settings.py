@@ -110,6 +110,7 @@ class SettingsController:
             "notify": self.ctx.settings.notifications.get_active(),
             "notify_transcript": self.ctx.settings.notification_text.get_active(),
             "shortcut": self.ctx.state.shortcut_binding,
+            "shortcut_mode": ("toggle", "hold")[self.ctx.settings.shortcut_mode.get_selected()],
             "whisper_cpp_binary": self.ctx.settings.cpp_binary.get_text().strip(),
             "whisper_cpp_model": self.ctx.settings.cpp_model.get_text().strip(),
             "whisper_cpp_gpu": self.ctx.settings.cpp_gpu.get_active(),

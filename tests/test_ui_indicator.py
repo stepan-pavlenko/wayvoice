@@ -49,6 +49,12 @@ class IndicatorTests(unittest.TestCase):
             self.assertEqual(self.window.settings_button.get_tooltip_text(), 'Open WayVoice')
             present.assert_not_called()
 
+    def test_hold_recording_explains_release_instead_of_another_press(self):
+        self.paint(recording=True, ptt_recording=True)
+        self.assertEqual(self.window.detail_label.get_text(), 'Release the shortcut to transcribe.')
+        self.paint(recording=True)
+        self.assertEqual(self.window.detail_label.get_text(), 'Press again when you are done.')
+
     def test_compact_drag_handle_and_details_keep_long_errors_out_of_row(self):
         self.assertIsInstance(self.window.handle, Gtk.WindowHandle)
         self.assertFalse(self.window.details.get_expanded())

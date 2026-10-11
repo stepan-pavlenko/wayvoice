@@ -219,6 +219,19 @@ class SettingsPage:
         shortcut_btn.connect("clicked", self.ctx.shortcut._open_shortcut_capture)
         self.shortcut_row.add_suffix(shortcut_btn)
         control_group.add(self.shortcut_row)
+        self.shortcut_mode = Adw.ComboRow(
+            title=self.ctx.state.t("shortcut.mode"))
+        self.shortcut_mode.set_model(Gtk.StringList.new([
+            self.ctx.state.t("shortcut.mode_toggle"), self.ctx.state.t("shortcut.mode_hold")]))
+        self.shortcut_mode.set_selected(1 if self.ctx.state.cfg.get("shortcut_mode") == "hold" else 0)
+        portal_mode = portal_shortcut_desktop()
+        self.shortcut_mode.set_sensitive(portal_mode)
+        def mode_hint(row, *_args):
+            key = ("shortcut.hold_hint" if row.get_selected() == 1 else None) if portal_mode else "shortcut.hold_unavailable"
+            row.set_subtitle(self.ctx.state.t(key) if key else "")
+        mode_hint(self.shortcut_mode)
+        self.shortcut_mode.connect("notify::selected", mode_hint)
+        control_group.add(self.shortcut_mode)
         if manual_shortcut_required():
             self.shortcut_help = Gtk.Label(
                 label=(self.ctx.state.t("shortcut.portal.hint") if portal_shortcut_desktop()

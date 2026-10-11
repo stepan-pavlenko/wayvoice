@@ -14,6 +14,29 @@ WayVoice uses GTK 4 and libadwaita, records through PipeWire, and supports Faste
 
 The current version is **0.6.11**. Download packages from [GitHub Releases](https://github.com/pavlenkosa/wayvoice/releases).
 
+## Push-to-talk
+
+Configure the global shortcut in Settings, then choose **Hold to talk (PTT)**. This mode uses
+press and release events from the desktop shortcut portal, currently integrated
+with KDE Plasma. Hold the key while speaking and release it to transcribe.
+The microphone button continues to start and stop recording on each click.
+If the shortcut session is lost, WayVoice cancels its held recording.
+
+The GNOME shortcut backend does not provide release events, so its shortcut
+continues to work as a toggle. On compositors that support separate press and
+release bindings, assign these commands to the same key:
+
+```bash
+wayvoice ptt-start  # key press
+wayvoice ptt-stop   # key release
+```
+
+The compositor must deliver both commands in order, including release when the
+focus changes. WayVoice's recording time limit remains a safety stop. These
+bindings do not register themselves; configure them in your desktop or compositor.
+The commands acknowledge the gesture immediately; recording failures appear in the app’s status.
+Use **Open indicator** on Home to show the compact recording status window.
+
 ## Screenshots
 
 Screenshots show the development version in English.

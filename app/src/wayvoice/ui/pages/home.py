@@ -36,6 +36,11 @@ class HomePage:
         text.append(make_label(self.ctx.state.t("home.title"), "hero-title", wrap=True))
         text.append(make_label(self.ctx.state.t("home.subtitle"), "hero-subtitle", wrap=True))
         intro.append(text)
+        indicator = Gtk.Button(label=self.ctx.state.t("indicator.open"))
+        indicator.set_valign(Gtk.Align.CENTER)
+        indicator.set_action_name("win.indicator")
+        self.indicator_button = indicator
+        intro.append(indicator)
         self.status_pill = make_label(self.ctx.state.t("status.starting"), "status-pill")
         self.status_pill.set_valign(Gtk.Align.CENTER)
         intro.append(self.status_pill)
