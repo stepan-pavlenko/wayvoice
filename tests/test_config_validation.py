@@ -12,7 +12,7 @@ from wayvoice.daemon import _recording_limit
 class ConfigValidationTests(unittest.TestCase):
     def test_invalid_known_values_are_reported_without_losing_unknown_settings(self):
         bad_values = {"language": 42, "ui_language": [], "notify": "false",
-                      "model": {}, "max_recording_sec": float("inf"),
+                      "model": {}, "shortcut_mode": {}, "max_recording_sec": float("inf"),
                       "transcription_timeout_sec": float("nan")}
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "config.json"

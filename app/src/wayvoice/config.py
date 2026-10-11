@@ -23,6 +23,7 @@ DEFAULTS: dict[str, Any] = {
     "notify": True,
     "notify_transcript": False,
     "shortcut": "F8",
+    "shortcut_mode": "toggle",
     "whisper_cpp_binary": "",
     "whisper_cpp_model": "",
     "whisper_cpp_gpu": True,
@@ -85,6 +86,8 @@ def load_config() -> dict[str, Any]:
                                 int(value)
                             except (TypeError, ValueError, OverflowError):
                                 valid = False
+                        if key == "shortcut_mode" and (not isinstance(value, str) or value not in {"toggle", "hold"}):
+                            valid = False
                         if not valid:
                             invalid.append(key)
                             continue
