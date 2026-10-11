@@ -53,6 +53,7 @@ class OwnedJobTests(unittest.TestCase):
             setattr(ctx.settings, name, row)
         ctx.settings.model = mock.Mock()
         ctx.settings.model.get_selected.return_value = 2  # small
+        ctx.settings.auto_check_updates.get_active.return_value = True
         ctx.settings.ui_language = mock.Mock()
         ctx.settings.ui_language.get_selected.return_value = 2  # en
         ctx.settings.language = mock.Mock()
@@ -93,6 +94,7 @@ class OwnedJobTests(unittest.TestCase):
         self.assertEqual(saved['language'],'ru')
         self.assertEqual(saved['shortcut'],'F8')
         self.assertIs(saved['notify_transcript'], True)
+        self.assertIs(saved['auto_check_updates'], True)
         ctx.home.hotkey_label.set_text.assert_called_once_with('F8')
         self.assertFalse(ctx.preferences._saving)
         ctx.window.save_button.set_sensitive.assert_called_with(True)

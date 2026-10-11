@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.0 — 2026-10-11
+
+- Add an opt-in background release check and a Home notice with an update button. Checks do not download or install packages.
+
+- Add opt-in hold-to-talk through desktop portal press/release events, with recording ownership and cancellation on session loss. Add paired compositor commands for manual bindings.
+- Add a visible Home button for opening the indicator and explain release-to-transcribe during held recordings.
+- Use Linux-wide application descriptions and credit Stepan Pavlenko alongside contributors.
+
 ## 0.6.11 — 2026-10-11
 
 - Run native package updates inside the app, with progress, retry, service verification and automatic interface restart. Flatpak and source installations show their own update route.

@@ -35,6 +35,9 @@
   <supports><control>pointing</control><control>keyboard</control></supports>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="0.7.0" date="2026-10-11">
+      <description><p>Optional hold-to-talk with desktop portal press and release events, direct access to the indicator, and opt-in update checks with an update notice on the main page. Linux-wide application descriptions and expanded interface screenshots.</p></description>
+    </release>
     <release version="0.6.11" date="2026-10-11">
       <description><p>In-app package updates with automatic interface restart and recovery, a compact status card and convenient keyboard shortcuts. Improved cancellation, localization, recognizer output limits and release validation.</p></description>
     </release>

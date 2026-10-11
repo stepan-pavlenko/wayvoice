@@ -163,7 +163,7 @@ class IndicatorWindow(Adw.ApplicationWindow):
             detail = self.t('health.daemon_unavailable')
         elif reply.get('recording'):
             state = self.t('status.recording')
-            detail = self.t('hero.recording_hint')
+            detail = self.t('shortcut.hold_recording' if reply.get('ptt_recording') else 'hero.recording_hint')
         elif reply.get('busy'):
             state = self.t('status.transcribing')
             detail = self.t('indicator.processing')

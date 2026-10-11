@@ -64,6 +64,7 @@ class UpdateDialog:
             return
         self.spinner.stop()
         self.spinner.set_visible(False)
+        self.window.context.updates.checked(result)
         if not result['available']:
             self.dialog.set_body(self.t('update.current', version=__version__))
             return

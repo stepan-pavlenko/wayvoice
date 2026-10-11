@@ -109,7 +109,9 @@ class SettingsController:
             "paste_mode": PASTE_MODES[self.ctx.settings.paste.get_selected()],
             "notify": self.ctx.settings.notifications.get_active(),
             "notify_transcript": self.ctx.settings.notification_text.get_active(),
+            "auto_check_updates": self.ctx.settings.auto_check_updates.get_active(),
             "shortcut": self.ctx.state.shortcut_binding,
+            "shortcut_mode": ("toggle", "hold")[self.ctx.settings.shortcut_mode.get_selected()],
             "whisper_cpp_binary": self.ctx.settings.cpp_binary.get_text().strip(),
             "whisper_cpp_model": self.ctx.settings.cpp_model.get_text().strip(),
             "whisper_cpp_gpu": self.ctx.settings.cpp_gpu.get_active(),
@@ -192,6 +194,8 @@ class SettingsController:
         if hasattr(self.ctx.window, "save_button"):
             self.ctx.window.save_button.set_sensitive(True)
         self.ctx.state.cfg = cfg
+        if self.ctx.updates is not None:
+            self.ctx.updates.configure(cfg)
         if self._saved_draft is not None:
             self._baseline_draft = dict(self._saved_draft)
         self._refresh_save_state()

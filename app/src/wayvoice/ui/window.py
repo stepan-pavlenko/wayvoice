@@ -16,6 +16,7 @@ from .controllers.integration import IntegrationController
 from .controllers.settings import SettingsController
 from .controllers.shortcut import ShortcutController
 from .controllers.status import StatusController
+from .controllers.updates import UpdatesController
 from .dialogs.update import show_update
 from .dialogs.about import show_about
 from .dialogs.help import show_help
@@ -43,6 +44,7 @@ class WayVoiceWindow(Adw.ApplicationWindow):
         ctx.preferences = SettingsController(ctx)
         ctx.shortcut = ShortcutController(ctx)
         ctx.profiles = ProfilesController(ctx)
+        ctx.updates = UpdatesController(ctx)
         self.home = HomePage(ctx)
         self.settings = SettingsPage(ctx)
         self._install_css()
@@ -87,6 +89,8 @@ class WayVoiceWindow(Adw.ApplicationWindow):
         ctx.preferences.remember_draft()
         self.tasks.idle(ctx.integration._background_start)
         self.tasks.idle(ctx.models._refresh_model_state)
+        self.tasks.idle(ctx.updates.configure, self.state.cfg)
+        self.tasks.every(60_000, ctx.updates.tick)
         self.tasks.every(650, ctx.status._poll_status)
         self.tasks.every(900, ctx.preferences._poll_engine_settings)
 

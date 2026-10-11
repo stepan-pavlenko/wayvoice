@@ -62,7 +62,12 @@ class CompositionTests(unittest.TestCase):
         self.assertIs(self.window.context.home, self.window.home)
         self.assertFalse(hasattr(self.window, '_save'))
         self.assertFalse(hasattr(self.window, 'model'))
-        self.assertEqual([s[0] for s in self.tasks.sources], ['idle','idle',650,900])
+        self.assertEqual([s[0] for s in self.tasks.sources], ['idle','idle','idle',60_000,650,900])
+        # The new startup source and timer are inert without saved consent.
+        _, configure, args = self.tasks.sources[2]
+        configure(*args)
+        self.tasks.sources[3][1]()
+        self.assertFalse(self.window.context.updates.pending)
 
     def test_settings_uses_available_width_within_clamp(self):
         clamp = self.window.settings.root.get_child().get_child()

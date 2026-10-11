@@ -12,22 +12,46 @@ WayVoice uses GTK 4 and libadwaita, records through PipeWire, and supports Faste
 
 **Status:** alpha. GNOME Wayland is the primary tested desktop. KDE Plasma integration is implemented, but complete installed dictation and paste checks are still pending. wlroots desktops and installed Flatpak builds also need testing.
 
-The current version is **0.6.11**. Download packages from [GitHub Releases](https://github.com/pavlenkosa/wayvoice/releases).
+The current version is **0.7.0**. Download published packages from [GitHub Releases](https://github.com/pavlenkosa/wayvoice/releases).
+
+## Push-to-talk
+
+Configure the global shortcut in Settings, then choose **Hold to talk (PTT)**. This mode uses
+press and release events from the desktop shortcut portal, currently integrated
+with KDE Plasma. Hold the key while speaking and release it to transcribe.
+The microphone button continues to start and stop recording on each click.
+If the shortcut session is lost, WayVoice cancels its held recording.
+
+The GNOME shortcut backend does not provide release events, so its shortcut
+continues to work as a toggle. On compositors that support separate press and
+release bindings, assign these commands to the same key:
+
+```bash
+wayvoice ptt-start  # key press
+wayvoice ptt-stop   # key release
+```
+
+The compositor must deliver both commands in order, including release when the
+focus changes. WayVoice's recording time limit remains a safety stop. These
+bindings do not register themselves; configure them in your desktop or compositor.
+The commands acknowledge the gesture immediately; recording failures appear in the app’s status.
+Use **Open indicator** on Home to show the compact recording status window.
 
 ## Screenshots
 
-Screenshots show the development version in English.
+The screenshots show WayVoice in English.
+
+**Home** — dictation controls, preparation checks and the latest recognized text.
 
 ![WayVoice Home: dictation button, preparation checks and recognition settings](data/screenshots/home-en.png)
 
-<details>
-<summary>First-run setup and model settings</summary>
-
-![First-run setup: choose the interface language](data/screenshots/setup-en.png)
+**Settings** — recognition presets, model downloads and compute device.
 
 ![Settings: recognition presets, model downloads and compute device](data/screenshots/settings-en.png)
 
-</details>
+**First launch** — interface language and initial setup.
+
+![First-run setup: choose the interface language](data/screenshots/setup-en.png)
 
 ## Features
 
@@ -155,6 +179,11 @@ wayvoice model --cancel    # Cancel its download
 
 ## Updating
 
+You can enable **Automatically check for updates** in Settings and save the change.
+WayVoice then checks GitHub when you open the interface and every six hours while
+it remains open. A notice on Home shows a newer release with an **Update…** button.
+Automatic checks are off by default and do not download or install packages.
+
 Install a newer DEB or RPM using the same package-manager command as above. Native package upgrades restart the background services.
 
 On builds that include the updater, choose **Check for updates…** from the menu, or run:
@@ -170,7 +199,7 @@ The updater requires a compatible running daemon. Older installations need a man
 
 ## Privacy
 
-Faster-Whisper and whisper.cpp process recordings locally. Network access is used for downloads you request, plus explicit update checks and package downloads from GitHub. A custom recognition command may have its own network behavior.
+Faster-Whisper and whisper.cpp process recordings locally. Network access is used for downloads you request, plus update checks and package downloads from GitHub. Optional automatic checks contact GitHub while the interface is open; they do not send recordings. A custom recognition command may have its own network behavior.
 
 Temporary recordings are removed after processing or cancellation. Dictation text is hidden in desktop notifications by default. Clipboard managers and other applications may retain clipboard text according to your desktop settings.
 

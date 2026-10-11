@@ -156,6 +156,12 @@ class WayVoiceDaemon:
         self._prepare_cancel = threading.Event()
         self._shortcut_portal = None
         self._commands = None
+        self._ptt_lock = threading.Lock()
+        self._ptt_generation = 0
+        self._ptt_desired = None
+        self._ptt_handled = None
+        self._ptt_take = None
+        self._ptt_abort = False
 
     def prepare_on_start(self) -> None:
         """Get ready for the first dictation, now that this daemon owns the session.
@@ -384,6 +390,7 @@ class WayVoiceDaemon:
         self._reconcile_recorder(blocking=False)
         cfg = load_config()
         now = time.monotonic()
+        ptt_take = self._ptt_take
         return {
             "version": __version__,
             "recording": self.recorder.recording,
@@ -399,6 +406,7 @@ class WayVoiceDaemon:
             "engine": engine_status(cfg),
             "model": self._model_report(cfg),
             "shortcut": label_for(str(cfg.get("shortcut", "F8")), cfg.get("ui_language")),
+            "ptt_recording": bool(self.recorder.recording and ptt_take and ptt_take[1] == self._record_started),
             "shortcut_portal": self._shortcut_portal.snapshot() if self._shortcut_portal is not None else None,
         }
 
@@ -406,15 +414,64 @@ class WayVoiceDaemon:
         # Portal callbacks must never block on microphone or ASR work.
         if self._shutdown.is_set() or self._commands is None:
             return
+        if load_config().get("shortcut_mode", "toggle") == "hold":
+            self._ptt_press()
+            return
         try:
             self._commands.put_nowait((None, "toggle"))
         except queue.Full:
             self.last_warning = tr("daemon.too_busy", self._language())
 
+    def _ptt_press(self):
+        # Separate from the bounded command queue: release must survive saturation.
+        with self._ptt_lock:
+            if self._ptt_desired is None:
+                self._ptt_generation += 1
+                self._ptt_desired = self._ptt_generation
+
+    def _ptt_release(self):
+        with self._ptt_lock:
+            self._ptt_desired = None
+
+    def _ptt_disconnect(self):
+        with self._ptt_lock:
+            self._ptt_desired = None
+            self._ptt_abort = True
+
+    def _drain_ptt(self):
+        # Only the serialized command worker touches the owned take. The timestamp
+        # identifies a recording, so an old release cannot stop a later UI take.
+        with self._ptt_lock:
+            desired, abort = self._ptt_desired, self._ptt_abort
+            self._ptt_abort = False
+        if self._shutdown.is_set():
+            desired, abort = None, True
+        if self._ptt_take and self._ptt_take[0] != desired:
+            _, started = self._ptt_take
+            if self.recorder.recording and self._record_started == started:
+                reply = self.cancel() if abort else self.stop_recording()
+                if not reply.get("ok") and self.recorder.recording:
+                    # Preserve ownership and cancellation intent for another drain.
+                    with self._ptt_lock:
+                        self._ptt_abort |= abort
+                    return reply
+            self._ptt_take = None
+        if desired is not None and desired != self._ptt_handled:
+            self._ptt_handled = desired
+            if self.recorder.recording or self.busy:
+                self.last_warning = "A recording or recognition is already active."
+                return {"ok": False, "error": self.last_warning}
+            reply = self.start_recording()
+            if reply.get("ok") and self.recorder.recording:
+                self._ptt_take = (desired, self._record_started)
+            elif not reply.get("ok"):
+                self.last_error = str(reply.get("error", "Could not start recording"))
+            return reply
+
     def _portal_owner(self):
         if self._shortcut_portal is None:
             from .shortcut_portal import ShortcutPortal
-            self._shortcut_portal = ShortcutPortal(self._portal_activation)
+            self._shortcut_portal = ShortcutPortal(self._portal_activation, self._ptt_release, self._ptt_disconnect)
         return self._shortcut_portal
 
     def _restore_portal_shortcut(self):
@@ -775,6 +832,12 @@ class WayVoiceDaemon:
             if not portal.configure(str(cfg.get("shortcut", "F8"))):
                 return {"ok": False, "error": portal.snapshot().get("error") or "Shortcut configuration is unavailable."}
             return {"ok": True}
+        if command == "ptt-start":
+            self._ptt_press()
+            return self._drain_ptt() or {"ok": True}
+        if command == "ptt-stop":
+            self._ptt_release()
+            return self._drain_ptt() or {"ok": True}
         if command == "toggle-clipboard":
             return self.toggle(delivery_mode="copy")
         if command == "toggle":
@@ -921,7 +984,15 @@ class WayVoiceDaemon:
         hang until it timed out.
         """
         while True:
-            item = commands.get()
+            try:
+                self._drain_ptt()
+            except Exception as exc:
+                self.last_error = f"Hold shortcut failed: {exc}"
+                self._ptt_disconnect()
+            try:
+                item = commands.get(timeout=0.1)
+            except queue.Empty:
+                continue
             if item is None:
                 return
             conn, command = item
@@ -1052,6 +1123,19 @@ class WayVoiceDaemon:
                     _close(conn)
                     continue
                 command = data.decode("utf-8", "replace").strip()
+                if command in {"ptt-start", "ptt-stop"}:
+                    # Accept the gesture, not microphone work. Both edges bypass
+                    # the bounded queue; the worker drains their desired state.
+                    if command == "ptt-start":
+                        self._ptt_press()
+                    else:
+                        self._ptt_release()
+                    try:
+                        _send(conn, {"ok": True, "state": "accepted"})
+                    except OSError:
+                        pass
+                    _close(conn)
+                    continue
                 if command in INLINE_COMMANDS:
                     # The questions are answered here, on the loop, and cost a fraction of a
                     # millisecond each. Everything that can take time goes to the command

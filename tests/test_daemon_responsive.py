@@ -336,5 +336,39 @@ class NotifyTests(unittest.TestCase):
         self.assertEqual(self.procs, [])
 
 
+class HoldQueueTests(unittest.TestCase):
+    def test_release_survives_full_command_queue_without_blocking_accept_loop(self):
+        server = _Server(self)
+        daemon = server.daemon
+        slow = SlowCommand('test-block-worker')
+        stop = threading.Event()
+        def fake_stop():
+            daemon.recorder.recording = False
+            stop.set()
+            return {'ok': True}
+        daemon.stop_recording = mock.Mock(side_effect=fake_stop)
+        daemon._ptt_press()
+        daemon._ptt_handled = daemon._ptt_desired
+        daemon._ptt_take = (daemon._ptt_desired, 42.0)
+        daemon._record_started = 42.0
+        daemon.recorder.recording = True
+        with mock.patch.object(WayVoiceDaemon, 'dispatch', new=lambda obj, cmd: slow(obj, cmd)):
+            client = threading.Thread(target=lambda: _ask('test-block-worker'), daemon=True)
+            client.start()
+            try:
+                slow.wait_until_running()
+                while not daemon._commands.full():
+                    daemon._commands.put_nowait((None, 'clear-status'))
+                self.assertEqual(_ask('ptt-stop', 0.5), {'ok': True, 'state': 'accepted'})
+                self.assertIsNone(daemon._ptt_desired)
+                self.assertTrue(_ask('ping', 0.5).get('ok'))
+                daemon.stop_recording.assert_not_called()
+            finally:
+                slow.release.set()
+                client.join(timeout=5)
+            self.assertTrue(stop.wait(5), 'worker did not process accepted release')
+            daemon.stop_recording.assert_called_once()
+
+
 if __name__ == "__main__":
     unittest.main()

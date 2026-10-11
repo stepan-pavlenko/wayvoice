@@ -29,7 +29,7 @@ from .shortcut import apply_shortcut
 #: The command list in the usage line, so that the message and the parser below
 #: cannot drift apart: both are built from this one string.
 _COMMANDS = (
-    "toggle|start|stop|cancel|status|model [--download|--cancel]"
+    "toggle|start|stop|ptt-start|ptt-stop|cancel|status|model [--download|--cancel]"
     "|deps [--install ID|--install-all]|settings|engine-setup|engine-status|update [--check|--install]"
 )
 
@@ -295,7 +295,7 @@ def main() -> None:
     if command == "model":
         _model_command(args[1:])
         return
-    if command not in {"toggle", "start", "stop", "cancel", "status", "ping", "quit"}:
+    if command not in {"toggle", "start", "stop", "ptt-start", "ptt-stop", "cancel", "status", "ping", "quit"}:
         print(tr("cli.usage", commands=_COMMANDS), file=sys.stderr)
         raise SystemExit(2)
 

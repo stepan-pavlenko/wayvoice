@@ -42,8 +42,10 @@ def actual_trigger(shortcuts) -> str:
 
 
 class ShortcutPortal:
-    def __init__(self, on_activate):
+    def __init__(self, on_activate, on_deactivate=None, on_disconnect=None):
         self._activate = on_activate
+        self._deactivate = on_deactivate or (lambda: None)
+        self._disconnect = on_disconnect or (lambda: None)
         self._lock = threading.Lock()
         self._state = {'state': 'idle', 'error': '', 'trigger': ''}
         self._thread = None
@@ -65,6 +67,8 @@ class ShortcutPortal:
             return dict(self._state)
 
     def _status(self, state, error='', trigger=''):
+        if state != 'active':
+            self._disconnect()
         with self._lock:
             self._state = dict(state=state, error=error, trigger=trigger)
 
@@ -218,6 +222,7 @@ class ShortcutPortal:
     def _retire_session(self):
         # BindShortcuts is single-use even if its consent was cancelled or timed
         # out. Retry must create a new session and inspect its restored actions.
+        self._disconnect()
         session = self._session
         self._drop_session_subscription()
         self._session = None
@@ -299,9 +304,9 @@ class ShortcutPortal:
             return
         if signal == 'ShortcutsChanged':
             self._update(values[1])
-        elif signal == 'Activated' and values[1] == ACTION and self.snapshot()['state'] == 'active':
+        elif signal in {'Activated', 'Deactivated'} and values[1] == ACTION and self.snapshot()['state'] == 'active':
             try:
-                self._activate()
+                (self._activate if signal == 'Activated' else self._deactivate)()
             except Exception as exc:
                 self._status('error', str(exc))
 
@@ -313,6 +318,7 @@ class ShortcutPortal:
     def _session_closed(self, _connection=None, _sender=None, path=None, *_):
         if path is not None and path != self._session:
             return
+        self._disconnect()
         self._drop_session_subscription()
         self._session = None
         self._configured = False
@@ -321,6 +327,7 @@ class ShortcutPortal:
     def _owner_changed(self, _connection, _sender, _path, _interface, _signal, parameters, *_):
         _, old, new = parameters.unpack()
         if old:
+            self._disconnect()
             self._drop_session_subscription()
             for path in list(self._requests):
                 self._finish_request(path)
@@ -337,6 +344,7 @@ class ShortcutPortal:
                 self._status('unavailable', str(exc))
 
     def close(self):
+        self._disconnect()
         self._closed = True
         if self._context is not None and self._loop is not None:
             source = self.GLib.idle_source_new()
@@ -346,6 +354,7 @@ class ShortcutPortal:
             self._thread.join(timeout=2)
 
     def _cleanup(self):
+        self._disconnect()
         if self._connection is None:
             return
         for path in list(self._requests):

@@ -91,6 +91,19 @@ class UpdateUITests(unittest.TestCase):
         deferred()
         self.assertTrue(self.update.busy)
 
+    def test_home_notice_tracks_manual_check_and_reuses_update_action(self):
+        self.update._checked({'available': True, 'version': '0.7.0'})
+        banner = self.window.context.home.update_banner
+        self.assertTrue(banner.get_revealed())
+        self.assertTrue(banner.get_visible())
+        self.assertIn('0.7.0', banner.get_title())
+        with mock.patch('wayvoice.ui.window.show_update') as show:
+            banner.emit('button-clicked')
+            show.assert_called_once_with(self.window)
+        self.update._checked({'available': False})
+        self.assertFalse(banner.get_revealed())
+        self.assertFalse(banner.get_visible())
+
     def test_restart_retry_keeps_actual_installed_version_and_skips_install(self):
         from wayvoice.ui.dialogs.update import UpdateFailure
         self.update.can_install = True

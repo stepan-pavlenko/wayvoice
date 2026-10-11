@@ -273,7 +273,7 @@ class StatusController:
             self.ctx.home.mic_button.set_sensitive(True)
             self.ctx.home.status_pill.set_text(self.ctx.state.t("status.recording"))
             self.ctx.home.hero_state.set_text(self.ctx.state.t("hero.recording"))
-            self.ctx.home.hero_caption.set_text(f"{self.ctx.state.t('hero.recording_hint')}  ·  {elapsed}s")
+            self.ctx.home.hero_caption.set_text(f"{self.ctx.state.t('shortcut.hold_recording' if reply.get('ptt_recording') else 'hero.recording_hint')}  ·  {elapsed}s")
             self.ctx.home.mic_icon.set_from_icon_name("media-playback-stop-symbolic")
         elif busy:
             state = "busy"

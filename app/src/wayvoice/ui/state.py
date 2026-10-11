@@ -39,3 +39,4 @@ class UiContext:
     preferences: Any = None
     profiles: Any = None
     shortcut: Any = None
+    updates: Any = None
