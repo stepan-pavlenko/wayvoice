@@ -39,18 +39,19 @@ Use **Open indicator** on Home to show the compact recording status window.
 
 ## Screenshots
 
-Screenshots show the development version in English.
+The screenshots show WayVoice in English.
+
+**Home** — dictation controls, preparation checks and the latest recognized text.
 
 ![WayVoice Home: dictation button, preparation checks and recognition settings](data/screenshots/home-en.png)
 
-<details>
-<summary>First-run setup and model settings</summary>
-
-![First-run setup: choose the interface language](data/screenshots/setup-en.png)
+**Settings** — recognition presets, model downloads and compute device.
 
 ![Settings: recognition presets, model downloads and compute device](data/screenshots/settings-en.png)
 
-</details>
+**First launch** — interface language and initial setup.
+
+![First-run setup: choose the interface language](data/screenshots/setup-en.png)
 
 ## Features
 
