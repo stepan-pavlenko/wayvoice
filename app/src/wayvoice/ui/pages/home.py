@@ -71,15 +71,21 @@ class HomePage:
         hero.append(shortcut_box)
         self.shortcut_support = make_label("", "muted", wrap=True, xalign=0.5)
         self.shortcut_support.set_halign(Gtk.Align.CENTER)
+        self.shortcut_support.set_visible(False)
         hero.append(self.shortcut_support)
         self.shortcut_manual = make_label("", "muted", wrap=True, xalign=0.5)
         self.shortcut_manual.set_direction(Gtk.TextDirection.LTR)
         self.shortcut_manual.set_selectable(True)
+        self.shortcut_manual.set_visible(False)
         hero.append(self.shortcut_manual)
         outer.append(hero)
 
-        setup = Adw.PreferencesGroup(title=self.ctx.state.t("setup.title"),
-                                     description=self.ctx.state.t("setup.description"))
+        setup_group = Adw.PreferencesGroup()
+        self.setup_expander = Adw.ExpanderRow(title=self.ctx.state.t("setup.title"),
+                                             subtitle=self.ctx.state.t("setup.description"))
+        self.setup_expander.set_expanded(True)
+        self._setup_completed = False
+        setup_group.add(self.setup_expander)
         self.setup_rows = {}
         for target, key in (("engine_status_row", "settings.recognition"),
                             ("model_state_row", "settings.model"),
@@ -90,9 +96,9 @@ class HomePage:
             button.connect("clicked", lambda _button, name=target: self.ctx.window.open_settings(name))
             row.add_suffix(button)
             row.set_activatable_widget(button)
-            setup.add(row)
+            self.setup_expander.add_row(row)
             self.setup_rows[target] = row
-        outer.append(setup)
+        outer.append(setup_group)
 
         grid = Gtk.Grid(column_spacing=12, row_spacing=12)
         grid.set_column_homogeneous(True)

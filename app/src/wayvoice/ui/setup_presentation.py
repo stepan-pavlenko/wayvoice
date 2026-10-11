@@ -36,6 +36,12 @@ def model_missing(reply):
 def paint_setup(ctx, reply, cfg, missing_deps):
     if not hasattr(ctx.home, 'setup_rows'):
         return
+    # Collapse only once after recognition actually produced text. Subsequent
+    # status polls must respect the user's decision to reopen the checklist.
+    if (reply.get('ok') and str(reply.get('last_text') or '').strip()
+            and hasattr(ctx.home, 'setup_expander') and not ctx.home._setup_completed):
+        ctx.home._setup_completed = True
+        ctx.home.setup_expander.set_expanded(False)
     for target, message in setup_steps(reply, cfg, missing_deps):
         if target in ctx.home.setup_rows:
             ctx.home.setup_rows[target].set_subtitle(ctx.state.t(message))

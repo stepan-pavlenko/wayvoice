@@ -1,8 +1,9 @@
 """Preparation is distinct from a tested voice-input loop."""
 import unittest
 from types import SimpleNamespace
+from unittest.mock import Mock
 try:
-    from wayvoice.ui.setup_presentation import setup_steps, model_missing
+    from wayvoice.ui.setup_presentation import setup_steps, model_missing, paint_setup
 except (ImportError, ValueError):
     setup_steps = None
 
@@ -42,3 +43,14 @@ class SetupStepsTests(unittest.TestCase):
                          'setup.shortcut_configured')
         self.assertEqual(self.steps()['shortcut_row'], 'setup.shortcut_manual')
         self.assertEqual(setup_steps({'ok': False}, {}, []), [('engine_status_row', 'setup.waiting')])
+
+    def test_checklist_collapses_after_text_once_and_can_be_reopened(self):
+        home = SimpleNamespace(setup_rows={}, setup_expander=Mock(), _setup_completed=False)
+        ctx = SimpleNamespace(home=home)
+        paint_setup(ctx, {'ok': True}, {}, [])
+        home.setup_expander.set_expanded.assert_not_called()
+        paint_setup(ctx, {'ok': True, 'last_text': 'Hello'}, {}, [])
+        home.setup_expander.set_expanded.assert_called_once_with(False)
+        home.setup_expander.set_expanded.reset_mock()
+        paint_setup(ctx, {'ok': True, 'last_text': 'Another dictation'}, {}, [])
+        home.setup_expander.set_expanded.assert_not_called()
